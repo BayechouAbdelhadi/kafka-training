@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Introduction to Kafka — A Story of Problems and Decisions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #0f172a;
+      --navy-mid: #1e293b;
+      --navy-light: #334155;
+      --red: #e11d48;
+      --red-soft: #f43f5e;
+      --amber: #f59e0b;
+      --amber-light: #fbbf24;
+      --white: #f8fafc;
+      --gray: #94a3b8;
+      --radius: 12px;
+      --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      min-height: 100vh;
+      overflow: hidden;
+      line-height: 1.6;
+    }
+
+    .deck {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 4rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s var(--ease), visibility 0.4s;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      z-index: 1;
+    }
+
+    .slide.prev {
+      transform: translateX(-4%);
+    }
+
+    .slide.next {
+      transform: translateX(4%);
+    }
+
+    .slide-inner {
+      max-width: 1100px;
+      width: 100%;
+      display: grid;
+      gap: 2rem;
+      align-content: start;
+    }
+
+    /* Title slide */
+    .slide[data-type="title"] .slide-inner {
+      text-align: center;
+      align-content: center;
+      gap: 1.5rem;
+    }
+
+    .slide[data-type="title"] .slide-title {
+      font-size: clamp(2.5rem, 5vw, 3.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--white) 0%, var(--gray) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+    }
+
+    .slide[data-type="title"] .slide-subtitle {
+      font-size: 1.35rem;
+      color: var(--amber-light);
+      font-weight: 500;
+    }
+
+    .slide[data-type="title"] .slide-subline {
+      font-size: 1rem;
+      color: var(--gray);
+      font-style: italic;
+      margin-top: 0.25rem;
+    }
+
+    .slide[data-type="title"] .slide-body {
+      font-size: 1.05rem;
+      color: var(--gray);
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .slide-body a {
+      color: var(--amber-light);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .slide-body a:hover {
+      border-bottom-color: var(--amber-light);
+    }
+
+    /* Part divider slides */
+    .slide[data-type="part"] .slide-inner {
+      text-align: center;
+      align-content: center;
+    }
+
+    .slide[data-type="part"] .slide-title {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .slide[data-type="part"] .slide-subtitle {
+      font-size: 1.15rem;
+      color: var(--gray);
+      font-weight: 400;
+      font-style: italic;
+      margin-top: 0.5rem;
+    }
+
+    /* Content slides */
+    .slide-title {
+      font-size: 1.85rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.01em;
+      padding-bottom: 0.5rem;
+      border-bottom: 3px solid var(--red);
+      display: inline-block;
+    }
+
+    .slide-subtitle {
+      font-size: 1rem;
+      color: var(--gray);
+      font-style: italic;
+    }
+
+    .slide-body {
+      font-size: 1.05rem;
+      color: var(--white);
+    }
+
+    .slide-body p {
+      margin-bottom: 1rem;
+    }
+
+    .slide-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    .slide-body ul {
+      list-style: none;
+      margin: 1rem 0;
+    }
+
+    .slide-body ul li {
+      position: relative;
+      padding-left: 1.5rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .slide-body ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 6px;
+      height: 6px;
+      background: var(--red);
+      border-radius: 50%;
+    }
+
+    .slide-body strong {
+      color: var(--red-soft);
+      font-weight: 600;
+    }
+
+    .slide-body em,
+    .slide-body .muted {
+      color: var(--gray);
+    }
+
+    .slide-body code {
+      background: var(--navy-mid);
+      padding: 0.15em 0.45em;
+      border-radius: 6px;
+      font-size: 0.9em;
+      color: var(--amber-light);
+    }
+
+    /* Two-column layout when image present */
+    .slide-with-image .slide-inner {
+      grid-template-columns: 1fr 380px;
+      grid-template-rows: auto 1fr;
+      gap: 2rem 3rem;
+      align-items: start;
+    }
+
+    .slide-with-image .slide-title {
+      grid-column: 1;
+    }
+
+    .slide-with-image .slide-body-wrap {
+      grid-column: 1;
+      grid-row: 2;
+      min-width: 0;
+    }
+
+    .slide-with-image .slide-image {
+      grid-column: 2;
+      grid-row: 1 / -1;
+      align-self: center;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      background: var(--navy-mid);
+    }
+
+    .slide-with-image .slide-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+      vertical-align: middle;
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--navy-mid);
+      z-index: 100;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--red), var(--amber));
+      width: 0%;
+      transition: width 0.3s var(--ease);
+    }
+
+    /* Navigation */
+    .nav-btn {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--navy-mid);
+      border: 1px solid var(--navy-light);
+      color: var(--white);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .nav-btn:hover {
+      background: var(--red);
+      border-color: var(--red);
+      color: var(--white);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .nav-prev {
+      left: 1.5rem;
+    }
+
+    .nav-next {
+      right: 1.5rem;
+    }
+
+    .nav-btn svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    /* Counter */
+    .counter {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--gray);
+      z-index: 50;
+    }
+
+    .counter strong {
+      color: var(--white);
+    }
+
+    /* Keyboard hint */
+    .key-hint {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--navy-light);
+      z-index: 50;
+    }
+  </style>
+</head>
+<body>
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <button type="button" class="nav-btn nav-prev" id="prevBtn" aria-label="Previous slide">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <button type="button" class="nav-btn nav-next" id="nextBtn" aria-label="Next slide">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
+
+  <div class="key-hint">← → or Space to navigate</div>
+  <div class="counter"><strong id="currentNum">1</strong> / <span id="totalNum">0</span></div>
+
+  <div class="deck" id="deck"></div>
+
+  <script>
+    const SLIDES = [
+      {
+        type: 'title',
+        title: 'Introduction to Kafka',
+        subtitle: 'A Story of Problems and Decisions',
+        subline: 'From data in motion to event-driven systems at scale',
+        body: 'This intro builds the mental model step by step: why events, why a log, why Kafka looks the way it does. Theory first, no code.'
+      },
+      {
+        type: 'part',
+        title: 'Part 1: The Data Problem',
+        subtitle: 'Why moving and storing data at scale is hard'
+      },
+      {
+        type: 'content',
+        title: 'Systems Produce Data Everywhere',
+        body: `
+          <ul>
+            <li>Web apps: user clicks, sign-ups, orders.</li>
+            <li>Services: logs, metrics, state changes.</li>
+            <li>Devices: sensor data, heartbeats.</li>
+          </ul>
+          <p><strong>The hard part</strong> is not producing data — it's <strong>moving</strong> it, <strong>storing</strong> it durably, and letting <strong>many consumers</strong> use it without coupling or losing messages.</p>
+          <p><strong>Next:</strong> How we used to connect systems (sync) and why we moved to events (async, then event-driven). Kafka exists because reliable, scalable event distribution needed a dedicated solution.</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Synchronous vs Asynchronous',
+        body: `
+          <ul>
+            <li><strong>Synchronous:</strong> Request → wait → Response. Tight coupling; one system blocks on another; hard to scale.</li>
+            <li><strong>Asynchronous:</strong> Fire-and-forget or callback. Decoupling; non-blocking; better for scale, but who stores the message?</li>
+            <li><strong>Event-driven:</strong> Systems react to <strong>events</strong> (something that happened). Producers and consumers are <strong>independent</strong>; something in the middle holds and distributes events.</li>
+          </ul>
+          <p><strong>Takeaway:</strong> Event-driven systems need a <strong>central store</strong> that keeps events and lets many consumers read them. Kafka is that store — durable, scalable, and built for events.</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'What Is an Event?',
+        body: `
+          <ul>
+            <li>An <strong>event</strong> is something that <strong>happened</strong> in the system (e.g. "OrderCreated", "UserSignedUp").</li>
+            <li>Events are <strong>immutable:</strong> once they occur, they cannot be changed or undone.</li>
+            <li>We don't "update" or "delete" events; we <strong>compensate with new events</strong> (e.g. "OrderCancelled").</li>
+          </ul>
+          <p><strong>Why this matters for Kafka:</strong> A system that stores events should <strong>append only</strong> — no in-place updates. That leads to the concept of a <strong>log</strong>. Immutability and append-only are at the heart of Kafka's design.</p>
+        `
+      },
+      {
+        type: 'part',
+        title: 'Part 2: The Log Idea',
+        subtitle: 'The data structure that makes event storage and replay possible'
+      },
+      {
+        type: 'content',
+        title: 'The Concept of a Log',
+        body: `
+          <ul>
+            <li>A <strong>log</strong> is an <strong>ordered, immutable</strong> sequence of records.</li>
+            <li>New data is <strong>appended</strong> at the end; existing records are never changed or removed.</li>
+            <li>Logs give <strong>durability</strong> (data is persisted) and <strong>replayability</strong> (you can read again from any position).</li>
+          </ul>
+          <p><strong>Familiar idea:</strong> Write-ahead logs in databases — same principle: order matters, no in-place updates.</p>
+          <p><strong>Next:</strong> The first big problem — how to move data between many systems without point-to-point chaos. Kafka is, at its core, a distributed log (or many logs, one per partition).</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Moving Data Between Systems: The Central Event Log',
+        image: 'diagram-01-problem-vs-solution.png',
+        body: `
+          <ul>
+            <li><strong>Scenario:</strong> A web app produces events; logging, analytics, and other services all need the same data.</li>
+            <li><strong>Problem:</strong> Connecting each producer to each consumer (point-to-point) doesn't scale — and if a consumer is down, data can be lost.</li>
+            <li><strong>Solution:</strong> A <strong>central, durable event log.</strong> Producers write once; many consumers read on their own. Data is <strong>stored</strong>, not just passed through.</li>
+          </ul>
+          <p>That's why Kafka is called an <strong>event streaming platform</strong>, not just a message queue. One write, many reads — and the data stays so you can replay or add new consumers later.</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Organizing the Log: Topics',
+        image: 'diagram-02-topic-log.png',
+        body: `
+          <ul>
+            <li>Kafka organizes data into <strong>topics.</strong></li>
+            <li>A <strong>topic</strong> is a <strong>named, ordered, append-only</strong> stream of events — like a shared notebook: producers add to the end, consumers read at their own pace.</li>
+            <li><strong>Fan-out:</strong> Many consumers can read the same topic. <strong>Replay:</strong> You can read again from an earlier position.</li>
+          </ul>
+          <p><strong>Important:</strong> You never update or delete individual events in a topic. That's what makes replay and multiple consumers possible.</p>
+          <p><strong>Next:</strong> How Kafka implements a topic — and what happens when one log isn't enough. Append-only is the contract; replay and multiple consumers follow from it.</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Kafka Architecture: Topics, Producers, Consumers',
+        body: `
+          <ul>
+            <li>A <strong>topic</strong> is the category/feed name; internally it is <strong>implemented as a log</strong> (we'll split it into partitions next).</li>
+            <li><strong>Producers</strong> publish records to topics.</li>
+            <li><strong>Consumers</strong> subscribe to topics and process records.</li>
+            <li>The machines that hold the data are <strong>brokers</strong>; together they form a <strong>cluster.</strong></li>
+          </ul>
+          <p><strong>So far:</strong> One topic = one ordered log. When volume grows, a single log becomes a bottleneck. <strong>Next:</strong> Scale by splitting the log into <strong>partitions.</strong> Brokers are the physical layer; topics and partitions are the logical model.</p>
+        `
+      },
+      {
+        type: 'part',
+        title: 'Part 3: Scaling the Log',
+        subtitle: 'Partitions, brokers, and where messages go'
+      },
+      {
+        type: 'content',
+        title: 'Scaling the Log: Partitions',
+        image: 'diagram-03-partitions-brokers.png',
+        body: `
+          <ul>
+            <li><strong>Problem:</strong> One machine (and one consumer) can't keep up with all the reads and writes.</li>
+            <li><strong>Solution:</strong> Split each topic into <strong>partitions.</strong> Each partition is its own <strong>ordered log</strong> on a broker, with its own <strong>offset</strong> sequence.</li>
+            <li><strong>Result:</strong> Writes and reads can happen in parallel — and <strong>order is guaranteed within each partition</strong>, not across the whole topic.</li>
+          </ul>
+          <p><strong>Key point:</strong> Order is <strong>per partition</strong>, not per topic. To keep order for a given key, send all messages with that key to the same partition (we'll see how next). More partitions mean more parallelism — this is how Kafka scales.</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Brokers and Clusters',
+        body: `
+          <ul>
+            <li><strong>Broker:</strong> A Kafka server that holds partitions (as leader or replica).</li>
+            <li><strong>Cluster:</strong> A set of brokers; topics are spread across them for scale and fault tolerance.</li>
+            <li>You connect to the cluster via <strong>bootstrap servers</strong>; Kafka then directs you to the right broker for each topic and partition.</li>
+          </ul>
+          <p><strong>Physical vs logical:</strong> Brokers and clusters are the <strong>physical</strong> layer; topics and partitions are the <strong>logical</strong> model you work with.</p>
+          <p><strong>Next:</strong> When a producer sends a message, how does Kafka decide <strong>which partition</strong> it goes to?</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Partitioning Strategies: Which Partition Gets the Message?',
+        body: `
+          <p>The producer (or Kafka) decides <strong>which partition</strong> a record goes to:</p>
+          <ul>
+            <li><strong>Round Robin</strong> (e.g. null key): Messages spread evenly; <strong>order is not preserved</strong> across the topic.</li>
+            <li><strong>Key-based (hashing):</strong> <code>partition = hash(key) % numPartitions</code>. Same key → same partition → <strong>ordering guaranteed per key.</strong></li>
+            <li><strong>Custom:</strong> Your own logic (only when you really need it).</li>
+          </ul>
+          <p><strong>Default:</strong> Null key → round robin. Non-null key → key-based. Use keys when you need ordering for a given entity (e.g. user id, order id). Keys give you ordering and locality for a logical stream inside a topic.</p>
+        `
+      },
+      {
+        type: 'part',
+        title: 'Part 4: Fault Tolerance and Discovery',
+        subtitle: 'Replication, leaders, and how the cluster stays consistent'
+      },
+      {
+        type: 'content',
+        title: 'When Machines Fail: Replication and ISR',
+        image: 'diagram-04-replication-isr.png',
+        body: `
+          <ul>
+            <li><strong>Problem:</strong> If a broker dies, its partitions (and data) could be lost, and producers and consumers would break.</li>
+            <li><strong>Solution:</strong> <strong>Replicate</strong> each partition. One broker is the <strong>leader</strong> (handles reads and writes); others hold <strong>replicas.</strong> Replicas that are fully in sync are the <strong>ISR</strong> (In-Sync Replicas).</li>
+            <li><strong>When the leader fails:</strong> One in-sync replica becomes the new leader; clients keep going with minimal disruption.</li>
+          </ul>
+          <p>Kafka is <strong>fault-tolerant by design</strong> — replication and ISR are why it can promise durability and availability.</p>
+          <p><strong>Next:</strong> How do clients find out who the leader is and where each partition lives? <strong>Metadata.</strong></p>
+          <p class="muted">ISR = the set of replicas that are safe to promote to leader, with no data loss.</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Cluster Metadata: How Everyone Stays in Sync (KRaft)',
+        image: 'diagram-07-metadata-kraft.png',
+        body: `
+          <ul>
+            <li>Kafka keeps a <strong>consistent view</strong> of: which brokers exist, which topics and partitions exist, and <strong>who is the leader</strong> for each partition. That's <strong>metadata.</strong></li>
+            <li><strong>In the past:</strong> ZooKeeper held this metadata.</li>
+            <li><strong>Today:</strong> <strong>KRaft</strong> (Kafka Raft) — metadata lives inside Kafka, using a Raft consensus log. No ZooKeeper needed.</li>
+          </ul>
+          <p>Producers and consumers use this metadata to find leaders and partition locations. Keeping it consistent means correct routing and smooth leader election. In the docs, <strong>KRaft</strong> is the modern way to run Kafka without ZooKeeper.</p>
+        `
+      },
+      {
+        type: 'part',
+        title: 'Part 5: Writing and Reading Reliably',
+        subtitle: 'Producers, consumers, offsets, and rebalances'
+      },
+      {
+        type: 'content',
+        title: 'Writing Reliably: Producers',
+        body: `
+          <ul>
+            <li><strong>Challenges:</strong> The leader might crash after receiving a message; replicas might be slow; retries can create duplicates.</li>
+            <li><strong>What you can control:</strong><br>
+              <strong>Keys</strong> — routing and ordering (same key → same partition).<br>
+              <strong>acks</strong> (0, 1, all) — how many replicas must acknowledge before the producer considers the write successful.<br>
+              <strong>Batching</strong> — trade a bit of latency for higher throughput.<br>
+              <strong>Idempotence</strong> — avoid duplicates when the producer retries.</li>
+          </ul>
+          <p>Each setting exists because <strong>real failures happened at scale</strong>. We'll go deeper in the Producer chapter. For durable production, <strong>acks=all</strong> and <strong>idempotence</strong> are the usual choice.</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Reading at Scale: Consumers and Consumer Groups',
+        image: 'diagram-05-consumer-groups.png',
+        body: `
+          <ul>
+            <li><strong>Problem:</strong> One consumer can't keep up; and we must avoid two consumers in the same group reading the same partition (double processing).</li>
+            <li><strong>Solution:</strong> <strong>Consumer groups.</strong> In a group, each partition is read by <strong>one</strong> consumer. Different groups can read the same topic (e.g. one for analytics, one for notifications).</li>
+            <li><strong>Offsets:</strong> Each consumer tracks its position (offset) per partition in <code>__consumer_offsets</code>. After a restart, it resumes from the last committed offset.</li>
+          </ul>
+          <p>You get <strong>scalable</strong>, <strong>replayable</strong>, and <strong>crash-resilient</strong> consumption. Offsets are the bookmark in the log — next we'll see how they're stored and committed.</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Offsets: Where They Live and How to Commit Them',
+        body: `
+          <ul>
+            <li><strong>Where:</strong> By default, Kafka stores consumer offsets in the internal topic <code>__consumer_offsets</code>, so consumers can resume from their last position after a restart.</li>
+            <li><strong>Automatic commit</strong> (<code>enable.auto.commit=true</code>): Kafka commits at intervals. <em>Upside:</em> Simple. <em>Downside:</em> If the consumer crashes before the next commit, you risk losing or duplicating work.</li>
+            <li><strong>Manual commit</strong> (<code>enable.auto.commit=false</code>): Your code calls <code>commitSync()</code> or <code>commitAsync()</code> after processing. <em>Upside:</em> You control when to commit (e.g. only after work is done). <em>Downside:</em> A bit more code.</li>
+          </ul>
+          <p><strong>In practice:</strong> For production, manual commit is usually preferred — commit only after you've successfully processed the messages (the pattern for at-least-once processing).</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Rebalances: When the Consumer Group Changes',
+        image: 'diagram-06-rebalance.png',
+        body: `
+          <ul>
+            <li><strong>What:</strong> Kafka <strong>reassigns partitions</strong> to consumers in a group when something changes — who's in the group, or how many partitions the topic has.</li>
+            <li><strong>When it happens:</strong> A new consumer joins; a consumer leaves or crashes; the number of partitions in a subscribed topic changes.</li>
+            <li><strong>Why:</strong> So every partition is still read by exactly one active consumer, and load is spread fairly.</li>
+            <li><strong>What you notice:</strong> A short pause while assignments change; then consumers resume from their <strong>committed offsets</strong>, so already-committed work isn't processed twice.</li>
+          </ul>
+          <p>Rebalances are normal — understanding them helps you design for both availability and latency. We'll see them in action in the Consumers chapter.</p>
+        `
+      },
+      {
+        type: 'part',
+        title: 'Part 6: Data Format — Bytes, Serialization, and Schemas',
+        subtitle: 'How producers and consumers agree on the shape of data'
+      },
+      {
+        type: 'content',
+        title: 'Messages Are Just Bytes',
+        body: `
+          <ul>
+            <li>Kafka brokers store <strong>everything as bytes.</strong> They don't interpret keys or values, and they don't enforce data types or schemas (by design — keeps brokers simple and format-agnostic).</li>
+            <li><strong>What that means for you:</strong> Producers and consumers must <strong>agree</strong> on how to turn application data into bytes and back. If they don't, the consumer can't read the data correctly.</li>
+          </ul>
+          <p><strong>Next:</strong> Serialization (producer) and deserialization (consumer) — and how to keep formats in sync over time with <strong>schemas.</strong> Brokers are simple pipes; the intelligence is in the clients and in schema management.</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Serialization and Deserialization',
+        body: `
+          <ul>
+            <li><strong>Serialization (producer):</strong> Convert your objects (e.g. key string, value JSON) into byte arrays before sending to Kafka. Example: <code>[key, value] → [bytes, bytes]</code></li>
+            <li><strong>Deserialization (consumer):</strong> Convert byte arrays back into objects your application can use. Must use the <strong>same format</strong> as the producer. Example: <code>[bytes, bytes] → [key, value]</code></li>
+          </ul>
+          <p><strong>Common formats:</strong> JSON, Avro, Protobuf. Avro or Protobuf with Schema Registry give compact storage and <strong>schema evolution</strong> (next slides). Mismatched serializers are a classic source of bad data; Schema Registry helps avoid that.</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Schema Registry',
+        body: `
+          <ul>
+            <li><strong>Role:</strong> Central place that <strong>stores and serves</strong> message schemas (e.g. Avro, JSON Schema, Protobuf). Producers and consumers fetch the schema (by ID) and use it to serialize/deserialize.</li>
+            <li><strong>Benefits:</strong> Producers and consumers <strong>agree on the structure</strong> of data; you can <strong>evolve</strong> schemas over time without breaking existing consumers if you follow compatibility rules.</li>
+          </ul>
+          <p><strong>Next:</strong> What "evolve without breaking" means — <strong>backward</strong> and <strong>forward</strong> compatibility. Schema Registry is the contract store; compatibility settings are the rules for safe evolution.</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Schema Compatibility: The Three Types',
+        body: `
+          <p>To evolve schemas without breaking producers or consumers:</p>
+          <ul>
+            <li><strong>Backward:</strong> New schema (Vn) can <strong>read old data</strong> (Vn-1). Safe when <strong>consumers</strong> upgrade first (they can still read current data).</li>
+            <li><strong>Forward:</strong> Old schema (Vn-1) can <strong>read new data</strong> (Vn). Safe when <strong>producers</strong> upgrade first (old consumers can still read new messages).</li>
+            <li><strong>Full:</strong> Both backward and forward. Safest for environments where upgrade order is unknown.</li>
+          </ul>
+          <p><strong>Choose</strong> based on who you deploy first — consumers or producers — and whether you need to support mixed versions. <em>Backward = consumer upgrades first; forward = producer upgrades first.</em></p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Backward Compatibility (Detail)',
+        body: `
+          <p><strong>Definition:</strong> New schema (Vn) can read old data (Vn-1).</p>
+          <p><strong>Typical rules:</strong></p>
+          <ul>
+            <li><strong>Remove a field</strong> in Vn → Old data may still have it → New schema ignores it ✓</li>
+            <li><strong>Add a field with a default</strong> in Vn → Old data doesn't have it → Default is used ✓</li>
+          </ul>
+          <p><strong>Takeaway:</strong> Lets you <strong>upgrade consumers</strong> and deploy new code that still reads existing data safely. Backward is the most common requirement: new consumer code reading old messages.</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Forward Compatibility (Detail)',
+        body: `
+          <p><strong>Definition:</strong> Old schema (Vn-1) can read new data (Vn).</p>
+          <p><strong>Typical rules:</strong></p>
+          <ul>
+            <li><strong>Add a field</strong> in Vn → Old consumer doesn't know it → Ignores it ✓</li>
+            <li><strong>Remove a field</strong> in Vn that had a default in Vn-1 → Old schema still has the default → Works ✓</li>
+          </ul>
+          <p><strong>Takeaway:</strong> Lets you <strong>upgrade producers</strong> and send new shapes without breaking existing consumers. Forward is useful when producers roll out new features before all consumers are updated.</p>
+        `
+      },
+      {
+        type: 'part',
+        title: 'Part 7: Where We Go From Here'
+      },
+      {
+        type: 'content',
+        title: 'How This Training Follows the Story',
+        body: `
+          <ol style="list-style: decimal; padding-left: 1.5rem; margin: 1rem 0;">
+            <li style="margin-bottom: 0.5rem;"><strong>Setup</strong> — Run a cluster (e.g. Docker).</li>
+            <li style="margin-bottom: 0.5rem;"><strong>Topics & partitions</strong> — Create topics, see logs, leaders, ISR.</li>
+            <li style="margin-bottom: 0.5rem;"><strong>Producers</strong> — Durability, acks, batching in practice.</li>
+            <li style="margin-bottom: 0.5rem;"><strong>Consumers & groups</strong> — Offsets, scaling, rebalances.</li>
+            <li style="margin-bottom: 0.5rem;"><strong>Failures</strong> — Broker crashes, leader election, edge cases.</li>
+          </ol>
+          <p><strong>One rule:</strong> CLI and concepts first — you'll see Kafka's behavior directly before using it from application code. Same progression as this deck: problem → decision → concept, then hands-on.</p>
+        `
+      },
+      {
+        type: 'content',
+        title: 'Next Step',
+        body: `
+          <p><strong>Start with <a href="../Kafka-Internals-Training/00-Setup.md" style="color: var(--amber-light);">00-Setup</a>.</strong></p>
+          <p>You'll build the mental model <strong>from the ground up</strong> in the same order the problems were solved — and then reinforce it with the CLI.</p>
+        `
+      }
+    ];
+
+    let current = 0;
+    const total = SLIDES.length;
+
+    function renderSlide(index) {
+      const s = SLIDES[index];
+      const slide = document.createElement('div');
+      slide.className = 'slide' + (s.image ? ' slide-with-image' : '');
+      slide.dataset.type = s.type;
+      slide.dataset.index = index;
+
+      let imgHtml = '';
+      if (s.image) {
+        imgHtml = `<div class="slide-image"><img src="${s.image}" alt="" /></div>`;
+      }
+
+      let bodyHtml = '';
+      if (s.body) {
+        bodyHtml = `<div class="slide-body-wrap"><div class="slide-body">${s.body}</div></div>`;
+      }
+
+      let subtitleHtml = '';
+      if (s.type === 'title') {
+        if (s.subtitle) subtitleHtml += `<p class="slide-subtitle">${s.subtitle}</p>`;
+        if (s.subline) subtitleHtml += `<p class="slide-subtitle slide-subline">${s.subline}</p>`;
+      } else if (s.subtitle) {
+        subtitleHtml = `<p class="slide-subtitle">${s.subtitle}</p>`;
+      }
+
+      slide.innerHTML = `
+        <div class="slide-inner">
+          <h2 class="slide-title">${s.title}</h2>
+          ${subtitleHtml}
+          ${bodyHtml}
+          ${imgHtml}
+        </div>
+      `;
+
+      return slide;
+    }
+
+    function buildDeck() {
+      const deck = document.getElementById('deck');
+      deck.innerHTML = '';
+      SLIDES.forEach((_, i) => {
+        deck.appendChild(renderSlide(i));
+      });
+      document.getElementById('totalNum').textContent = total;
+    }
+
+    function goTo(index) {
+      if (index < 0 || index >= total) return;
+      const slides = document.querySelectorAll('.slide');
+      slides.forEach((el, i) => {
+        el.classList.remove('active', 'prev', 'next');
+        if (i === index) el.classList.add('active');
+        else if (i < index) el.classList.add('prev');
+        else el.classList.add('next');
+      });
+      current = index;
+      document.getElementById('currentNum').textContent = index + 1;
+      document.getElementById('prevBtn').disabled = index === 0;
+      document.getElementById('nextBtn').disabled = index === total - 1;
+      document.getElementById('progressBar').style.width = ((index + 1) / total * 100) + '%';
+    }
+
+    function next() { goTo(current + 1); }
+    function prev() { goTo(current - 1); }
+
+    document.getElementById('prevBtn').addEventListener('click', prev);
+    document.getElementById('nextBtn').addEventListener('click', next);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.target.closest('a')) return;
+      if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+    });
+
+    buildDeck();
+    goTo(0);
+  </script>
+</body>
+</html>
