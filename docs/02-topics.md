@@ -35,11 +35,18 @@ Schema may be extended later (e.g. currency, items). Document any change in this
 
 ## Create the topic
 
-With Kafka running (Step 1):
+With Kafka running (Step 1), from the **order-service/** directory either run the script:
 
 ```bash
 cd order-service
-docker compose exec kafka kafka-topics.sh --create \
+sh scripts/create-orders-topic.sh
+```
+
+or run the command directly:
+
+```bash
+cd order-service
+docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --create \
   --topic orders \
   --partitions 1 \
   --replication-factor 1 \
@@ -49,7 +56,7 @@ docker compose exec kafka kafka-topics.sh --create \
 Verify:
 
 ```bash
-docker compose exec kafka kafka-topics.sh --describe --topic orders --bootstrap-server localhost:9092
+docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --describe --topic orders --bootstrap-server localhost:9092
 ```
 
 ## Next step
