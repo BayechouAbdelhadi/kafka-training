@@ -1,8 +1,8 @@
 #!/bin/sh
-# Create the orders topic. Run from order-service/ (where docker-compose.yml is).
+# Create the orders topic. Run from project root (where docker-compose.yml is).
 # Requires Kafka to be running: docker compose up -d
 set -e
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --create \
   --topic orders \
   --partitions 1 \
