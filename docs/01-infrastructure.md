@@ -270,7 +270,115 @@ docker compose exec kafka /opt/kafka/bin/kafka-dump-log.sh --files /var/lib/kafk
 
 ---
 
-## 6. Cleanup (your responsibility)
+## 6. Auto topic creation
+
+By default, Kafka creates a topic automatically when you first produce to it or consume from it. This section shows that behavior, then disables it so that producing to a non-existing topic fails.
+
+### 6.1 Auto creation is on (default)
+
+Produce to a topic that **does not exist** yet (e.g. `auto-created-demo`). Use the console producer: send one line, then **Ctrl+C** to exit.
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+docker compose exec -it kafka /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server localhost:9092 --topic auto-created-demo
+```
+
+Type a line (e.g. `hello`), press Enter, then **Ctrl+C**.
+
+<!-- tab:Windows -->
+
+```batch
+docker compose exec -it kafka /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server localhost:9092 --topic auto-created-demo
+```
+
+Type a line (e.g. `hello`), press Enter, then **Ctrl+C**.
+
+<!-- tabs:end -->
+
+Describe the topic. You will see that it **exists** and was created automatically:
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --describe --topic auto-created-demo --bootstrap-server localhost:9092
+```
+
+<!-- tab:Windows -->
+
+```batch
+docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --describe --topic auto-created-demo --bootstrap-server localhost:9092
+```
+
+<!-- tabs:end -->
+
+Note the **partition count** and **replication factor** (typically 1 partition, replication 1). Those are the broker defaults. Auto creation can be convenient in development, but in production it is usually better to **disable** it: otherwise topics appear with default partitioning and replication, which you may not want. Topics should be created explicitly with the right number of partitions and replication factor.
+
+### 6.2 Disable auto topic creation
+
+Add the following to the **kafka** service in `docker-compose.yml`, under the `environment` section:
+
+```yaml
+KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+```
+
+Then restart the cluster so the change is applied:
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+docker compose down -v
+docker compose up -d
+```
+
+<!-- tab:Windows -->
+
+```batch
+docker compose down
+docker compose up -d
+```
+
+<!-- tabs:end -->
+
+Wait a few seconds for Kafka to be ready.
+
+### 6.3 Produce to a non-existing topic (expect an error)
+
+Try to produce to a topic that does **not** exist (e.g. `does-not-exist`). Do **not** create this topic first.
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+docker compose exec -it kafka /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server localhost:9092 --topic does-not-exist
+```
+
+Type a line and press Enter.
+
+<!-- tab:Windows -->
+
+```batch
+docker compose exec -it kafka /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server localhost:9092 --topic does-not-exist
+```
+
+Type a line and press Enter.
+
+<!-- tabs:end -->
+
+You should get an **error** (e.g. `TopicAuthorizationException` or `UNKNOWN_TOPIC_OR_PARTITION`). The broker no longer creates the topic automatically; it must exist before you can produce to it. Exit the producer with **Ctrl+C**.
+
+With auto creation disabled, create topics explicitly (e.g. with `kafka-topics.sh --create`) so you control partitions and replication.
+
+---
+
+## 7. Cleanup (your responsibility)
 
 When you are done with the step, stop the cluster and remove the container (and optionally the volume so the next run starts clean). Choose your shell:
 
