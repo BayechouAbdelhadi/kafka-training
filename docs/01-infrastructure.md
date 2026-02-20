@@ -169,7 +169,9 @@ docker compose exec kafka ls -la /var/lib/kafka/data
 
 <!-- tabs:end -->
 
-You should see directories per topic partition (e.g. `learning-0`, `learning-1`, `learning-2`). Enter one partition. Choose your shell:
+You should see directories per topic partition (e.g. `learning-0`, `learning-1`, `learning-2`). If you only see `.` and `..`, (1) make sure you completed steps 2 and 4 (create topic and send messages).
+
+Enter one partition. Choose your shell:
 
 <!-- tabs:start -->
 
@@ -189,7 +191,64 @@ docker compose exec kafka ls -la /var/lib/kafka/data/learning-0
 
 You will see **log segment** files (`.log`) and **index** files (`.index`, `.timeindex`). The log holds the messages; the indexes allow fast lookup by offset or time.
 
-Inspect one of the segment files (optional). Choose your shell:
+**See the log as raw bytes** — the segment file is stored in binary. View the first bytes to confirm it is not human-readable:
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+docker compose exec kafka od -A x -t x1z -v -N 384 /var/lib/kafka/data/learning-0/00000000000000000000.log
+```
+
+<!-- tab:Windows -->
+
+```batch
+docker compose exec kafka od -A x -t x1z -v -N 384 /var/lib/kafka/data/learning-0/00000000000000000000.log
+```
+
+<!-- tabs:end -->
+
+You see hex bytes (and ASCII on the right). The log content is stored in this binary format on disk.
+
+**See the index content** — the `.index` file maps offsets to byte positions in the log. View its raw bytes first:
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+docker compose exec kafka od -A x -t x1z -v -N 128 /var/lib/kafka/data/learning-0/00000000000000000000.index
+```
+
+<!-- tab:Windows -->
+
+```batch
+docker compose exec kafka od -A x -t x1z -v -N 128 /var/lib/kafka/data/learning-0/00000000000000000000.index
+```
+
+<!-- tabs:end -->
+
+Then decode the index to see offset → position pairs:
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+docker compose exec kafka /opt/kafka/bin/kafka-dump-log.sh \
+  --files /var/lib/kafka/data/learning-0/00000000000000000000.index
+```
+
+<!-- tab:Windows -->
+
+```batch
+docker compose exec kafka /opt/kafka/bin/kafka-dump-log.sh --files /var/lib/kafka/data/learning-0/00000000000000000000.index
+```
+
+<!-- tabs:end -->
+
+**Decode the log** — to see the actual messages (key/value) from the segment, use the dump tool:
 
 <!-- tabs:start -->
 
