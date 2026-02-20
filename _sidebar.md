@@ -2,3 +2,4 @@
 - **Guide**
   - [Overview](docs/README.md)
   - [Step 1: Infrastructure](docs/01-infrastructure.md)
+  - [Step 2: Topics](docs/02-topics.md)

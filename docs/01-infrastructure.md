@@ -1,5 +1,11 @@
 # Step 1 — Infrastructure
 
+**Check out the tag for this step** so you have the right code and config:
+
+```bash
+git checkout step-01-infrastructure
+```
+
 We keep it simple: run a **single-node Kafka cluster** (KRaft, no Zookeeper), create a topic, produce messages, then look at the **storage layer**. Do the steps in order. **You are responsible for cleanup** (see end).
 
 All commands assume you are in the **project root** and Kafka is running unless stated otherwise.
@@ -417,3 +423,12 @@ docker compose down -v
 <!-- tabs:end -->
 
 Do this between runs or at the end of the exercise so the next time you start from a clean state.
+
+---
+
+## Next step
+
+The next step is to **deep dive into topics**.
+
+- **Navigate:** [Step 2 — Topics](02-topics.md)
+

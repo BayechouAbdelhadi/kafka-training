@@ -7,7 +7,7 @@ Follow the steps below to discover how this is done and explore it in practice.
 ## Steps
 
 1. [Step 1 — Infrastructure](01-infrastructure.md)
-
+2. [Step 2 — Topics](02-topics.md) *(deep dive; tag when ready)*
 
 ## Preview the docs
 
