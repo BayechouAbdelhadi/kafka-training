@@ -430,5 +430,5 @@ Do this between runs or at the end of the exercise so the next time you start fr
 
 The next step is to **deep dive into topics**.
 
-- **Navigate:** [Step 2 — Topics](02-topics.md)
+- **Navigate:** [Step 2 — Topics](docs/02-topics.md)
 
