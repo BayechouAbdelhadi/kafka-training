@@ -18,6 +18,10 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      # Run log cleaner more often (for Exercise 4 — compaction demo)
+      KAFKA_LOG_CLEANER_BACKOFF_MS: 1000
+      # Allow compaction even when little dirty data (default 0.5 = 50%)
+      KAFKA_LOG_CLEANER_MIN_CLEANABLE_RATIO: 0.01
     volumes:
       - kafka-1-data:/var/lib/kafka/data
 
@@ -39,6 +43,8 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_LOG_CLEANER_BACKOFF_MS: 1000
+      KAFKA_LOG_CLEANER_MIN_CLEANABLE_RATIO: 0.01
     volumes:
       - kafka-2-data:/var/lib/kafka/data
 
@@ -60,6 +66,8 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_LOG_CLEANER_BACKOFF_MS: 1000
+      KAFKA_LOG_CLEANER_MIN_CLEANABLE_RATIO: 0.01
     volumes:
       - kafka-3-data:/var/lib/kafka/data
 
@@ -81,6 +89,8 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_LOG_CLEANER_BACKOFF_MS: 1000
+      KAFKA_LOG_CLEANER_MIN_CLEANABLE_RATIO: 0.01
     volumes:
       - kafka-4-data:/var/lib/kafka/data
 

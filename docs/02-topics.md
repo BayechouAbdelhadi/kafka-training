@@ -375,7 +375,26 @@ Type a message and press Enter — it should be accepted.
 
 ### 3.6 Takeaway
 
-**min.insync.replicas** trades off **durability** (more replicas must ack) and **availability** (if too many brokers are down, writes with acks=all fail until enough replicas are back). .
+**min.insync.replicas** trades off **durability** (more replicas must ack) and **availability** (if too many brokers are down, writes with acks=all fail until enough replicas are back).
+
+---
+
+## Cleanup policies: delete and compact
+
+Kafka has two **cleanup policies** for topic segments:
+
+- **delete** (default): drop old log segments when they exceed **retention** (by time, e.g. `retention.ms`, or by size, e.g. `retention.bytes`).
+- **compact**: keep only the **latest** value per key; older values for the same key are removed when segments are compacted.
+
+**How it works:** Both policies apply **only to closed segments**. The **active (open) segment** is never cleaned up and never compacted. Segments close when they hit **segment.bytes** (size) or **segment.ms** (time); only then do retention-based deletion or compaction run on them.
+
+### Traps to avoid
+
+- **Expecting compaction or delete to be effective immediately** — Cleanup runs asynchronously (log cleaner thread). After producing, you may still see multiple values per key or old segments until the cleaner has run. With default `log.cleaner.backoff.ms` (e.g. 15s), there can be a noticeable delay.
+- **Expecting the open segment to be cleaned** — The current active segment is never compacted and never removed by retention. If you produce a few messages and never close the segment (e.g. very large `segment.ms` or never reaching `segment.bytes`), compaction will not run on that data.
+- **Compact: assuming one value per key right away** — Consumers can read duplicates (multiple values for the same key) until compaction has run on closed segments. Design for at least-once semantics and idempotent handling of updates.
+- **Delete: assuming data is gone at exactly retention time** — Deletion applies to **closed** segments. Data in the active segment is retained until the segment closes, so "old" data can outlive `retention.ms` until the next segment roll.
+- **Compact: null/tombstone semantics** — To remove a key from a compacted topic you must send a message with that key and a **null** value (tombstone). The tombstone is retained until compaction runs and then the key is removed.
 
 ---
 
