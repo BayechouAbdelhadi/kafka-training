@@ -738,4 +738,19 @@ Kafka has two **cleanup policies** for topic segments:
 
 ---
 
+## Conclusion: Configuring topics for your goals
+
+When you create or alter a topic, these levers help you balance **scalability**, **fault tolerance**, **durability**, and **delivery guarantees**.
+
+| Goal | What to configure | Advice |
+|------|-------------------|--------|
+| **Scalability** | **Partition count** | More partitions → more consumers in a group (up to one per partition) and higher produce throughput. Choose initial count with growth in mind; you can add partitions later but **not reduce** them, and adding can break per-key ordering. |
+| **Fault tolerance** | **Replication factor (RF)** | RF = number of copies of each partition. Higher RF (e.g. 2 or 3) lets the topic tolerate more broker failures without data loss. Use at least 2 in production. |
+| **Durability** | **RF + min.insync.replicas** | Set **min.insync.replicas** (e.g. 2 or more) so the leader only acks a write once that many replicas have it. Producers using **acks=all** then get a durable commit. Trade-off: if too many brokers are down, writes fail until enough replicas are back. |
+| **Delivery guarantees** | **Topic + producer + consumer** | Ordering is **per partition** (and per key if you use keys). For at-least-once or exactly-once, use **acks=all** and **min.insync.replicas** so commits are durable; then configure idempotent producers and transactional or deduplicating consumers as needed. The topic’s replication and retention keep data available for redelivery. |
+
+**Summary:** Use **enough partitions** for future scale, **replication factor ≥ 2** (often 3) for fault tolerance, and **min.insync.replicas ≥ 2** with **acks=all** for durability and stronger delivery guarantees. Choose **cleanup.policy** (delete vs compact) and **retention** to match how long you need the data.
+
+---
+
 All commands in this step assume you are in the **project root** and the cluster is running. Use the bootstrap server list above when connecting from the host.
