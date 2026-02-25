@@ -753,4 +753,8 @@ When you create or alter a topic, these levers help you balance **scalability**,
 
 ---
 
+**Next:** [Step 3 — Producers](docs/03-producers.md) — acks, idempotence, in-flight requests, and compression.
+
+---
+
 All commands in this step assume you are in the **project root** and the cluster is running. Use the bootstrap server list above when connecting from the host.

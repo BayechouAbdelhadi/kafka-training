@@ -3,3 +3,5 @@
   - [Overview](docs/README.md)
   - [Step 1: Infrastructure](docs/01-infrastructure.md)
   - [Step 2: Topics](docs/02-topics.md)
+  - [Step 3: Producers](docs/03-producers.md)
+  - [Step 4: Consumers](docs/04-consumers.md)

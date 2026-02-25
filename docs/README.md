@@ -6,8 +6,10 @@ Follow the steps below to discover how this is done and explore it in practice.
 
 ## Steps
 
-1. [Step 1 — Infrastructure](01-infrastructure.md)
-2. [Step 2 — Topics](02-topics.md) *(deep dive; tag when ready)*
+1. [Step 1 — Infrastructure](docs/01-infrastructure.md)
+2. [Step 2 — Topics](docs/02-topics.md) *(deep dive; tag when ready)*
+3. [Step 3 — Producers](docs/03-producers.md)
+4. [Step 4 — Consumers](docs/04-consumers.md)
 
 ## Preview the docs
 
