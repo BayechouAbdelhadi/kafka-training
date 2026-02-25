@@ -10,6 +10,7 @@ Follow the steps below to discover how this is done and explore it in practice.
 2. [Step 2 — Topics](docs/02-topics.md) *(deep dive; tag when ready)*
 3. [Step 3 — Producers](docs/03-producers.md)
 4. [Step 4 — Consumers](docs/04-consumers.md)
+5. [Step 5 — Schema (Avro)](docs/05-schema.md)
 
 ## Preview the docs
 

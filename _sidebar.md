@@ -5,3 +5,4 @@
   - [Step 2: Topics](docs/02-topics.md)
   - [Step 3: Producers](docs/03-producers.md)
   - [Step 4: Consumers](docs/04-consumers.md)
+  - [Step 5: Schema (Avro)](docs/05-schema.md)

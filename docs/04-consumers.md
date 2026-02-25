@@ -67,6 +67,8 @@ This step covers the Kafka consumer: consumer groups, offsets, partition assignm
 
 ---
 
+**Next:** [Step 5 — Schema (Avro)](docs/05-schema.md) — Avro schema, creation, evolution, compatibility, serialization and schema storing, deserialization.
+
 ---
 
 All commands in this step assume you are in the **project root** and the cluster is running. Use bootstrap `kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092` when using `docker compose exec kafka-1 ...`.
