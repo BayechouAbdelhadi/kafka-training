@@ -189,7 +189,11 @@ The producer can **retry** failed sends. You configure **`retries`** (how many t
 
 ### 7. Delivery semantics
 
-- At-most-once, at-least-once, exactly-once (brief); ordering is per partition.
+Delivery semantics describe how many times a record can be **delivered** (written to Kafka and later read by consumers):
+
+- **At-most-once** — The producer does not wait for an ack (e.g. `acks=0`) or fails after retries. A record is sent at most once; if something goes wrong, it may never be written. **No duplicates**, but **possible loss**.
+- **At-least-once** — The producer waits for an ack and retries on failure (e.g. `acks=all`, `retries > 0`). The record is written at least once; if the ack is lost and the producer retries, it can be written **more than once**. **Possible duplicates**, no loss (assuming retries eventually succeed).
+- **Exactly-once** — The record is written once and only once. Achieved by combining `acks=all`, `retries > 0` and **`enable.idempotence=true`**.
 
 ### 8. In-flight requests and order
 
