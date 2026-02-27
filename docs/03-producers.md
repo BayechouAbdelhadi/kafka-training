@@ -205,7 +205,19 @@ Delivery semantics describe how many times a record can be **delivered** (writte
 
 ### 9. Compression
 
-- Producer-side `compression.type` (none, gzip, snappy, lz4, zstd); trade-off CPU vs network/disk.
+**What it is:** The producer can **compress** record batches before sending. Same data uses less network bandwidth and less disk on the broker; the cost is extra **CPU** for compress (producer) and decompress (broker, consumer). Config: **`compression.type`**.
+
+**Available types:**
+
+| Type    | Pros                          | Cons                          |
+|---------|-------------------------------|--------------------------------|
+| **none**  | No CPU cost                   | No size reduction              |
+| **gzip**  | High compression ratio        | Slowest; high CPU               |
+| **snappy**| Fast; reasonable ratio        | Older; often less efficient than lz4/zstd |
+| **lz4**   | Very fast; good ratio         | Slightly lower ratio than zstd |
+| **zstd**  | Best ratio; good speed        | Newer; may need recent client/broker |
+
+**Recommendation:** Use **lz4** or **zstd** for a good balance of speed and compression. Prefer **zstd** if you want the best ratio and your Kafka version supports it; **lz4** if you prioritize lowest latency. Use **none** only if CPU is critical or payloads are already compressed.
 
 ### 10. Key producer settings
 
