@@ -559,6 +559,8 @@ Topic: replication-demo	PartitionCount: 2	ReplicationFactor: 3	...
 
 ---
 
+<a id="exercise-5-min-in-sync-replicas"></a>
+
 ## Exercise 5: Min in-sync replicas
 
 This exercise uses a **four-broker** cluster so that when we stop **one** broker we still have **controller quorum** (3 of 4 up). We configure a topic with **min.insync.replicas=3** and **RF=3**. With one broker down, only 2 replicas stay in the ISR, so produces with `acks=all` fail — and `kafka-topics.sh --describe` still works because the cluster has quorum.

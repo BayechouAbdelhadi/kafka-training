@@ -77,7 +77,7 @@ docker compose exec kafka-1 /opt/kafka/bin/kafka-topics.sh --create --topic user
 
 ### 2. Serialization
 
-Key and value must be serialized to bytes before send. Producer config: `key.serializer`, `value.serializer`. For now, all producer records in this step use the **text (String) serializer**, the default. **Serialization with Avro** (schema, Schema Registry, evolution) is covered in a dedicated step: [Step 5 — Schema (Avro)](05-schema.md).
+Key and value must be serialized to bytes before send. Producer config: `key.serializer`, `value.serializer`. For now, all producer records in this step use the **text (String) serializer**, the default. **Serialization with Avro** (schema, Schema Registry, evolution) is covered in a dedicated step: [Step 5 — Schema (Avro)](docs/05-schema.md).
 
 ### 3. Partitioning
 
@@ -160,7 +160,14 @@ All messages with key **user-123** are in the **same partition** (e.g. Partition
 
 ### 4. Acknowledgments and durability
 
-- `acks=0`, `acks=1`, `acks=all`; link to topic `min.insync.replicas` and replication factor. When the send succeeds, the broker returns metadata (acknowledgement).
+The producer’s **acks** setting controls how many replicas must have written the record before the broker sends an acknowledgement:
+
+- **acks=0** — No durability guarantee (fire-and-forget). The producer does not wait for any ack; best for availability and throughput, but messages can be lost.
+- **acks=1** — Leader acks after writing to its log. Better than 0, but not enough if you need durability: if the leader fails before replicas catch up, the record can be lost.
+- **acks=all** (or **acks=-1**) — Leader waits until all in-sync replicas have written. Great for durability when the topic has sufficient replication and **min.insync.replicas**; can be a bottleneck (higher latency, writes fail if not enough replicas are in the ISR).
+
+When the send succeeds, the broker returns **metadata** (topic, partition, offset) as the acknowledgement. For the link between **acks=all** and **min.insync.replicas** (and what happens when ISR shrinks), see [Step 2 — Topics, Exercise 5: Min in-sync replicas](docs/02-topics.md?id=exercise-5-min-in-sync-replicas).
+
 
 ### 5. Retries
 
