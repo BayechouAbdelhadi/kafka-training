@@ -181,7 +181,11 @@ The producer can **retry** failed sends. You configure **`retries`** (how many t
 
 ### 6. Idempotent producer
 
-- `enable.idempotence=true`; deduplication by producer ID and sequence; retries without duplicates.
+**How to enable:** Set **`enable.idempotence=true`** in the producer config. No other code change: you keep sending records as usual; the client and broker handle deduplication.
+
+**How it works:** The broker assigns the producer a **producer ID** (PID) when it first connects. For each record, the producer sends a **sequence number** per partition (monotonically increasing). The broker stores the last sequence it accepted per (PID, partition). If it receives the same PID + partition + sequence again (e.g. after a retry), it recognizes the duplicate and does **not** write it a second time — it just acks again. So retries do not create duplicate records: the broker deduplicates by **producer ID + partition + sequence**.
+
+**Effect:** With idempotence enabled, you can use **retries** and **at-least-once** semantics without duplicates. Ordering per partition is also preserved even when you allow multiple in-flight requests (see section 8).
 
 ### 7. Delivery semantics
 
