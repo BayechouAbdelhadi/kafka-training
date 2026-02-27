@@ -197,7 +197,11 @@ Delivery semantics describe how many times a record can be **delivered** (writte
 
 ### 8. In-flight requests and order
 
-- `max.in.flight.requests.per.connection`; how multiple in-flight requests can cause out-of-order writes when retries happen; preserving order with `max.in.flight=1` vs `enable.idempotence=true`.
+**`max.in.flight.requests.per.connection`** (default 5) limits how many produce requests can be in flight per connection before acks. More in flight → better throughput, but with **retries** the broker can receive batches in a different order (e.g. B then retry of A). **Without idempotence** the broker just appends what arrives, so the log can end up B, A — order is broken.
+
+**With idempotence** the broker does **not** reorder later; it **refuses** writes that violate sequence. It tracks the last accepted sequence per (ProducerId, partition) and only accepts `last_sequence + 1`. If B (seq=11) arrives before A (seq=10), the broker returns **OUT_OF_ORDER_SEQUENCE** and does not write B; the producer resets and re-sends in order. So wrong order is **prevented**, not fixed afterward.
+
+**Ways to preserve order:** (1) **max.in.flight=1** — one request at a time, no reordering even without idempotence, but low throughput. (2) **enable.idempotence=true** — broker enforces monotonic sequence; you can keep max.in.flight at 5 (Kafka’s safe limit), get order per partition and no duplicates with good throughput.
 
 ### 9. Compression
 
