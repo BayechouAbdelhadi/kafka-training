@@ -12,35 +12,53 @@ This step covers the Kafka producer: durability, delivery semantics, idempotence
 
 ---
 
+## Producer flow at a glance
+
+The diagram below sums up the path of a record from your code to the broker. We will go through each part in this step.
+
+![Producer flow: from record to broker](../assets/kafka_producer.png)
+
+- **ProducerRecord** — Topic, optional partition, optional key, value. You pass it to **send()**.
+- **Serialization** — Key and value are turned into bytes (we cover serializers and config).
+- **Partitioning** — The partitioner chooses the partition (explicit partition, key hash, or round-robin); same key ⇒ same partition for ordering.
+- **Batching** — Records for the same topic-partition are grouped into batches to reduce network and disk I/O.
+- **Send to broker** — Batches are sent to the Kafka broker. On **failure**, the producer checks if the error is **retryable** (e.g. transient, not leader) or **non-retryable** (e.g. serialization, invalid config); retryable errors trigger a retry, otherwise an exception is thrown. Retries, when enabled, can cause **duplicates** (the same record may be written more than once); to avoid duplicates, enable **idempotence**.
+- **Acknowledgement** — When the send succeeds, the broker returns **metadata** (topic, partition, offset), which acts as the acknowledgement that the record is stored.
+
+This step details serialization, partitioning, batching, retries, acknowledgements (acks), and related settings.
+
+---
+
 ## Content to cover
+
 
 ### 1. Role of the producer
 
-- Sending records to topics; batching.
+- Sending records to topics; ProducerRecord (topic, partition, key, value) and **send()**; batching (records for the same topic-partition grouped before send).
 
-### 2. Partitioning
+### 2. Serialization
+
+Key and value must be serialized to bytes before send. Producer config: `key.serializer`, `value.serializer`. For now, all producer records in this step use the **text (String) serializer**, the default. **Serialization with Avro** (schema, Schema Registry, evolution) is covered in a dedicated step: [Step 5 — Schema (Avro)](05-schema.md).
+
+### 3. Partitioning
 
 - It is up to the **producer** to choose the partitioning strategy. Default: hash(key) % num_partitions when key is present, else round-robin; custom partitioner can override (e.g. by header, or sticky partition for no key). The broker receives the partition index from the producer (or uses the default partitioner on the broker if the client does not specify).
 
-### 3. Acknowledgments and durability
+### 4. Acknowledgments and durability
 
-- `acks=0`, `acks=1`, `acks=all`; link to topic `min.insync.replicas` and replication factor.
+- `acks=0`, `acks=1`, `acks=all`; link to topic `min.insync.replicas` and replication factor. When the send succeeds, the broker returns metadata (acknowledgement).
 
-### 4. Retries
+### 5. Retries
 
 - `retries` and `retry.backoff.ms`; whether the producer retries depends on the **error type** — retryable (e.g. transient network, not leader) vs non-retryable (e.g. serialization, invalid config); relation to duplicates and need for idempotence when using at-least-once.
 
-### 5. Serialization
-
-- Key and value must be serialized to bytes before send; common serializers (String, Avro, JSON, etc.); producer config: `key.serializer`, `value.serializer`.
-
-### 6. Delivery semantics
-
-- At-most-once, at-least-once, exactly-once (brief); ordering is per partition.
-
-### 7. Idempotent producer
+### 6. Idempotent producer
 
 - `enable.idempotence=true`; deduplication by producer ID and sequence; retries without duplicates.
+
+### 7. Delivery semantics
+
+- At-most-once, at-least-once, exactly-once (brief); ordering is per partition.
 
 ### 8. In-flight requests and order
 
@@ -62,17 +80,20 @@ This step covers the Kafka producer: durability, delivery semantics, idempotence
 
 ## Exercises (titles — what each will cover)
 
-| # | Exercise title | What it will cover |
-|---|----------------|--------------------|
-| 1 | **acks and durability** | Topic with `min.insync.replicas=2` and RF≥2; produce with `acks=0`, `acks=1`, `acks=all`; optionally stop a broker and show `acks=all` fails when ISR &lt; min.insync.replicas. Takeaway: use `acks=all` for durability. |
-| 2 | **Delivery semantics and idempotence** | Produce with `enable.idempotence=false` then `enable.idempotence=true`; consume to show no duplicates with idempotence. Takeaway: idempotence avoids duplicates from retries. |
-| 3 | **In-flight requests and ordering** | Produce ordered messages (same key) with `max.in.flight.requests.per.connection=5` and `enable.idempotence=false` to show order can break; repeat with idempotence to show order preserved. Takeaway: multiple in-flight can break order without idempotence; with idempotence, order is preserved. |
-| 4 | **Compression (optional)** | Produce larger payload with `compression.type=none` then `compression.type=lz4`; show smaller on-wire or on-disk size. Takeaway: producer compression reduces network and storage at CPU cost. |
-| 5 | **Conclusion / summary** | Recap: acks for durability, idempotence for no duplicates and ordered writes with in-flight &gt; 1, compression for efficiency. Optional table: goal → producer settings. |
+Exercises follow the **producer flow**: acknowledgement, retries and idempotence, in-flight and ordering, compression, then summary. Serialization has no exercise in this step — it is covered in a dedicated step.
+
+| # | Flow step | Exercise | What it will cover |
+|---|-----------|----------|--------------------|
+| — | **Serialization** | *(no exercise here)* | Covered in [Step 5 — Schema (Avro)](05-schema.md) (dedicated step). |
+| 1 | **Acknowledgement** | acks and durability | Topic with `min.insync.replicas=2` and RF≥2; produce with `acks=0`, `acks=1`, `acks=all`; optionally stop a broker and show `acks=all` fails when ISR &lt; min.insync.replicas. Takeaway: use `acks=all` for durability. |
+| 2 | **Retries → duplicates → idempotence** | delivery semantics and idempotence | Produce with `enable.idempotence=false` then `enable.idempotence=true`; consume to show no duplicates with idempotence. Takeaway: idempotence avoids duplicates from retries. |
+| 3 | **In-flight and order** | in-flight requests and ordering | Produce ordered messages (same key) with `max.in.flight.requests.per.connection=5` and `enable.idempotence=false` to show order can break; repeat with idempotence to show order preserved. Takeaway: multiple in-flight can break order without idempotence; with idempotence, order is preserved. |
+| 4 | **Compression (batching efficiency)** | compression (optional) | Produce larger payload with `compression.type=none` then `compression.type=lz4`; show smaller on-wire or on-disk size. Takeaway: producer compression reduces network and storage at CPU cost. |
+| 5 | **Summary** | conclusion | Recap: acks for durability, idempotence for no duplicates and ordered writes with in-flight &gt; 1, compression for efficiency. Optional table: goal → producer settings. |
 
 ---
 
-**Next:** [Step 4 — Consumers](docs/04-consumers.md) — consumer groups, offsets, partition assignment, and rebalance.
+**Next:** [Step 4 — Consumers](04-consumers.md) — consumer groups, offsets, partition assignment, and rebalance.
 
 ---
 
