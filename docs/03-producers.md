@@ -171,7 +171,13 @@ When the send succeeds, the broker returns **metadata** (topic, partition, offse
 
 ### 5. Retries
 
-- `retries` and `retry.backoff.ms`; whether the producer retries depends on the **error type** — retryable (e.g. transient network, not leader) vs non-retryable (e.g. serialization, invalid config); relation to duplicates and need for idempotence when using at-least-once.
+The producer can **retry** failed sends. You configure **`retries`** (how many times) and **`retry.backoff.ms`** (delay between attempts). Whether it retries depends on the **error type**.
+
+**Retryable errors** — the producer will retry until success or until `retries` is exhausted. Examples: transient network failure, connection timeout, **NotLeaderForPartition** (leader moved), topic not found yet (auto-creation delay), broker not available.
+
+**Non-retryable errors** — the producer fails immediately and does not retry. Examples: serialization error (wrong or missing serializer), invalid config, message too large, authentication/authorization failure.
+
+**Retries can generate duplicates.** If the broker actually wrote the record but the acknowledgement was lost (e.g. network glitch), the producer assumes failure and retries — sending the same record again. The topic then contains the record twice. So with retries and at-least-once delivery, you can get duplicate messages. The next section (**idempotent producer**) shows how to avoid that: the broker can deduplicate by producer ID and sequence so retries do not create duplicates.
 
 ### 6. Idempotent producer
 
