@@ -29,6 +29,45 @@ This step details serialization, partitioning, batching, retries, acknowledgemen
 
 ---
 
+## Topic for this step: user-clicks
+
+All producer exercises in this step use a single topic: **user-clicks** (e.g. events like "user clicked on a page"). Create it once from the **project root** with **2 partitions**, **replication factor 3**, and **min.insync.replicas=2** (for durability and the acks exercise). Use the script or the command below.
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+sh scripts/create-topic-user-clicks.sh
+```
+
+Or by hand:
+
+```bash
+docker compose exec kafka-1 /opt/kafka/bin/kafka-topics.sh --create \
+  --topic user-clicks \
+  --partitions 2 \
+  --replication-factor 3 \
+  --config min.insync.replicas=2 \
+  --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092
+```
+
+<!-- tab:Windows -->
+
+```batch
+scripts\create-topic-user-clicks.cmd
+```
+
+Or by hand:
+
+```batch
+docker compose exec kafka-1 /opt/kafka/bin/kafka-topics.sh --create --topic user-clicks --partitions 2 --replication-factor 3 --config min.insync.replicas=2 --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092
+```
+
+<!-- tabs:end -->
+
+---
+
 ## Content to cover
 
 
@@ -42,7 +81,82 @@ Key and value must be serialized to bytes before send. Producer config: `key.ser
 
 ### 3. Partitioning
 
-- It is up to the **producer** to choose the partitioning strategy. Default: hash(key) % num_partitions when key is present, else round-robin; custom partitioner can override (e.g. by header, or sticky partition for no key). The broker receives the partition index from the producer (or uses the default partitioner on the broker if the client does not specify).
+It is up to the **producer** to choose the partitioning strategy. Default: **hash(key) % num_partitions** when key is present, else round-robin; custom partitioner can override (e.g. by header, or sticky partition for no key). The broker receives the partition index from the producer.
+
+The console producer does not print the producer response (partition, offset). To **prove that same key → same partition**, produce messages with keys, then **consume** with `print.partition=true` and `print.offset=true` — the consumer output shows partition and offset for each message, so you see that all messages with the same key land in the same partition.
+
+#### 3.1 Same key → same partition
+
+Use the **user-clicks** topic (create it above if you haven’t). Produce several click events with the **same user** (key) and one with another user, then consume with partition and offset printed.
+
+**Produce:** run the producer (command below), then type these **four lines** (one per line, Enter after each). Format: `key:value` (key = user id, value = click event).
+
+**Lines to type:**
+
+```
+user-123:click home
+user-123:click product
+user-123:click cart
+user-456:click checkout
+```
+
+Then press **Ctrl+C** to exit the producer.
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+docker compose exec -it kafka-1 /opt/kafka/bin/kafka-console-producer.sh \
+  --topic user-clicks \
+  --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 \
+  --property parse.key=true \
+  --property key.separator=:
+```
+
+<!-- tab:Windows -->
+
+```batch
+docker compose exec -it kafka-1 /opt/kafka/bin/kafka-console-producer.sh --topic user-clicks --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 --property parse.key=true --property key.separator=:
+```
+
+<!-- tabs:end -->
+
+**Consume** with partition and offset printed (Kafka 2.7+):
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+docker compose exec kafka-1 /opt/kafka/bin/kafka-console-consumer.sh \
+  --topic user-clicks \
+  --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 \
+  --from-beginning \
+  --property print.key=true \
+  --property key.separator=: \
+  --property print.partition=true \
+  --property print.offset=true
+```
+
+<!-- tab:Windows -->
+
+```batch
+docker compose exec kafka-1 /opt/kafka/bin/kafka-console-consumer.sh --topic user-clicks --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 --from-beginning --property print.key=true --property key.separator=: --property print.partition=true --property print.offset=true
+```
+
+<!-- tabs:end -->
+
+You should see output like (format may vary by Kafka version):
+
+```
+Partition:1	Offset:0	user-123	click home
+Partition:1	Offset:1	user-123	click product
+Partition:1	Offset:2	user-123	click cart
+Partition:0	Offset:0	user-456	click checkout
+```
+
+All messages with key **user-123** are in the **same partition** (e.g. Partition:1) with increasing offsets; **user-456** is in another partition. That reflects the producer response (partition, offset) and proves **same key → same partition**.
 
 ### 4. Acknowledgments and durability
 
