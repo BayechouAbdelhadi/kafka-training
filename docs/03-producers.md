@@ -219,30 +219,27 @@ Delivery semantics describe how many times a record can be **delivered** (writte
 
 **Recommendation:** Use **lz4** or **zstd** for a good balance of speed and compression. Prefer **zstd** if you want the best ratio and your Kafka version supports it; **lz4** if you prioritize lowest latency. Use **none** only if CPU is critical or payloads are already compressed.
 
-### 10. Key producer settings
+### 10. Takeaways and traps
 
-- Reference: `bootstrap.servers`, `acks`, `retries`, `retry.backoff.ms`, `linger.ms`, `batch.size`, `enable.idempotence`, `max.in.flight.requests.per.connection`, `compression.type`, `key.serializer`, `value.serializer`.
+**Takeaways (do this):**
+- **Durability** — Use `acks=all` and topic `min.insync.replicas` ≥ 2 so writes are committed to enough replicas.
+- **No duplicates, ordered** — Use `enable.idempotence=true` so retries don’t create duplicates and order per partition is kept even with `max.in.flight` > 1.
+- **Retries** — Keep retries enabled for retryable errors; understand retryable vs non-retryable so you don’t rely on retries for the wrong cases.
+- **Batching** — Tune `batch.size` and `linger.ms` so the producer batches records per partition; fewer, larger requests improve throughput and work better with compression.
+- **Compression** — Use `compression.type=lz4` or `zstd`; reduces network and disk.
+- **Key settings** — `bootstrap.servers`, `key.serializer`, `value.serializer`; `retry.backoff.ms` for backoff.
 
-### 11. Traps and best practices
+**Traps (avoid):**
+- **Weak acks** — `acks=0` or `acks=1` with no `min.insync.replicas` → risk of loss; use `acks=all` for durable writes.
+- **Retries without idempotence** — Retries can write the same record twice; enable idempotence if you want at-least-once without duplicates.
+- **Multiple in-flight without idempotence** — With `max.in.flight` > 1 and retries, order per partition can break; use idempotence or set `max.in.flight=1` (and accept lower throughput).
+- **Serializer/deserializer mismatch** — Producer and consumer must use compatible key/value serialization (see [Step 5 — Schema](05-schema.md) for Avro).
+- **No compression** — Skipping compression when payloads are large or network is a bottleneck wastes bandwidth and disk.
 
-- Relying on weak acks for durability; ignoring duplicates without idempotence; multiple in-flight without idempotence breaking order.
-
----
-
-## Exercises (titles — what each will cover)
-
-Exercises follow the **producer flow**: acknowledgement, retries and idempotence, in-flight and ordering, compression, then summary. Serialization has no exercise in this step — it is covered in a dedicated step.
-
-| # | Flow step | Exercise | What it will cover |
-|---|-----------|----------|--------------------|
-| — | **Serialization** | *(no exercise here)* | Covered in [Step 5 — Schema (Avro)](05-schema.md) (dedicated step). |
-| 1 | **Acknowledgement** | acks and durability | Topic with `min.insync.replicas=2` and RF≥2; produce with `acks=0`, `acks=1`, `acks=all`; optionally stop a broker and show `acks=all` fails when ISR &lt; min.insync.replicas. Takeaway: use `acks=all` for durability. |
-| 2 | **Retries → duplicates → idempotence** | delivery semantics and idempotence | Produce with `enable.idempotence=false` then `enable.idempotence=true`; consume to show no duplicates with idempotence. Takeaway: idempotence avoids duplicates from retries. |
-| 3 | **In-flight and order** | in-flight requests and ordering | Produce ordered messages (same key) with `max.in.flight.requests.per.connection=5` and `enable.idempotence=false` to show order can break; repeat with idempotence to show order preserved. Takeaway: multiple in-flight can break order without idempotence; with idempotence, order is preserved. |
-| 4 | **Compression (batching efficiency)** | compression (optional) | Produce larger payload with `compression.type=none` then `compression.type=lz4`; show smaller on-wire or on-disk size. Takeaway: producer compression reduces network and storage at CPU cost. |
-| 5 | **Summary** | conclusion | Recap: acks for durability, idempotence for no duplicates and ordered writes with in-flight &gt; 1, compression for efficiency. Optional table: goal → producer settings. |
+**Performant producer in short:** `acks=all` + `enable.idempotence=true` + `compression.type=lz4` (or zstd) + sensible `batch.size` / `linger.ms`; keep default `max.in.flight` (5). You get durability, no duplicates, order, and good throughput.
 
 ---
+
 
 **Next:** [Step 4 — Consumers](04-consumers.md) — consumer groups, offsets, partition assignment, and rebalance.
 
