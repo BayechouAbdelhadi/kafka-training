@@ -200,7 +200,7 @@ We will cover consumer deserialization and schema in practice in the [Step 5 —
 
 ### 6. Deserialization
 
-- Key and value arrive as bytes; consumer must deserialize using `key.deserializer` and `value.deserializer` (must match producer serialization).
+Records in Kafka are stored as **bytes**. The consumer must **deserialize** key and value using `key.deserializer` and `value.deserializer`; they must match the producer’s serialization (e.g. both sides use String, or both use Avro). Mismatched serialization leads to wrong data or deserialization errors. Deserialization and schema (including Schema Registry and Avro) are covered in practice in the [Step 5 — Schema (Avro)](docs/05-schema.md) step.
 
 ### 7. Where to start reading: auto.offset.reset
 
