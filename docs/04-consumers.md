@@ -12,6 +12,44 @@ This step covers the Kafka consumer: consumer groups, offsets, partition assignm
 
 ---
 
+## Topic for this step: order-topic
+
+Consumer exercises in this step use one topic: **order-topic** (e.g. order events). Create it once from the **project root** with **3 partitions** and replication factor 1. With 3 partitions we can run **two consumer groups** on the same topic — for example **notification-sender** and **inventory-manager** — so each group consumes the full stream independently (typical pattern: one topic, multiple groups for different use cases).
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+sh scripts/create-topic-order-topic.sh
+```
+
+Or by hand:
+
+```bash
+docker compose exec kafka-1 /opt/kafka/bin/kafka-topics.sh --create \
+  --topic order-topic \
+  --partitions 3 \
+  --replication-factor 1 \
+  --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092
+```
+
+<!-- tab:Windows -->
+
+```batch
+scripts\create-topic-order-topic.cmd
+```
+
+Or by hand:
+
+```batch
+docker compose exec kafka-1 /opt/kafka/bin/kafka-topics.sh --create --topic order-topic --partitions 3 --replication-factor 1 --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092
+```
+
+<!-- tabs:end -->
+
+---
+
 ## Content to cover
 
 ### 1. Role of the consumer
@@ -22,7 +60,77 @@ A single consumer instance can read from **multiple partitions** (e.g. one consu
 
 ### 2. Consumer group
 
-- **Consumer group** (`group.id`): a set of consumers that cooperate to consume one or more topics; each partition is assigned to exactly one consumer in the group; scaling by adding consumers (up to number of partitions).
+A **consumer group** (`group.id`) is a set of consumers that cooperate to consume one or more topics. Each partition is assigned to **exactly one** consumer in the group; you scale by adding consumers (up to the number of partitions). Different groups consume the **same** topic independently — each group gets its own copy of the stream.
+
+#### 2.1 Two groups, two members each (CLI)
+
+You can run **two consumer groups** on **order-topic**, each with **two members**, using the console consumer. Create the topic first (see above). Then open **four** terminals (or run two consumers in the background per group).
+
+**Group `notification-sender` — member 1 and 2:**  
+Run in terminal 1 and terminal 2 (same command; same `group.id`):
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+docker compose exec -it kafka-1 /opt/kafka/bin/kafka-console-consumer.sh \
+  --topic order-topic \
+  --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 \
+  --group notification-sender \
+  --from-beginning
+```
+
+<!-- tab:Windows -->
+
+```batch
+docker compose exec -it kafka-1 /opt/kafka/bin/kafka-console-consumer.sh --topic order-topic --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 --group notification-sender --from-beginning
+```
+
+<!-- tabs:end -->
+
+**Group `inventory-manager` — member 1 and 2:**  
+Run the same in terminal 3 and terminal 4, but with `--group inventory-manager`:
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+docker compose exec -it kafka-1 /opt/kafka/bin/kafka-console-consumer.sh \
+  --topic order-topic \
+  --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 \
+  --group inventory-manager \
+  --from-beginning
+```
+
+<!-- tab:Windows -->
+
+```batch
+docker compose exec -it kafka-1 /opt/kafka/bin/kafka-console-consumer.sh --topic order-topic --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 --group inventory-manager --from-beginning
+```
+
+<!-- tabs:end -->
+
+With **3 partitions** and **2 consumers per group**, Kafka assigns e.g. 2 partitions to one consumer and 1 to the other in each group. To feed the topic, run the **producer script** in another terminal (one message per second):
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+sh scripts/produce-one-per-second-order-topic.sh
+```
+
+<!-- tab:Windows -->
+
+```batch
+scripts\produce-one-per-second-order-topic.cmd
+```
+
+<!-- tabs:end -->
+
+You will see each message in **both** groups (once in notification-sender, once in inventory-manager), and within each group only **one** of the two members gets each message. Stop the producer and the consumers with **Ctrl+C**.
 
 ### 3. Offsets
 
