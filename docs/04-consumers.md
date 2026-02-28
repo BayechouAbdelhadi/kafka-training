@@ -16,7 +16,9 @@ This step covers the Kafka consumer: consumer groups, offsets, partition assignm
 
 ### 1. Role of the consumer
 
-- Reading records from topics; pull model; one consumer can read from multiple partitions, but each partition is consumed by at most one consumer in a group.
+The consumer **reads** records from one or more topics. Kafka uses a **pull** model: the consumer requests data from the broker (no broker push). That gives the consumer control over pace and batching.
+
+A single consumer instance can read from **multiple partitions** (e.g. one consumer reading partitions 0 and 1 of a topic). Within a **consumer group**, each partition is assigned to **at most one** consumer; so partitions are shared across the group without overlap. That is how you scale consumption (add consumers up to the number of partitions) and avoid duplicate processing of the same partition.
 
 ### 2. Consumer group
 
