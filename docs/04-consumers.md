@@ -204,7 +204,13 @@ Records in Kafka are stored as **bytes**. The consumer must **deserialize** key 
 
 ### 7. Where to start reading: auto.offset.reset
 
-- When the group has no committed offset (new group or new partition): `earliest` (from beginning) vs `latest` (only new messages); default and when to use each.
+When the group has **no committed offset** (new group or new partition), **`auto.offset.reset`** tells the consumer where to start:
+
+- **`earliest`** — Start from the beginning of the partition (smallest offset); use when you need to process all existing messages (e.g. backfill, replay).
+- **`latest`** — Start from the end (only new messages); use when you only care about data produced after the consumer joins (default in many clients).
+- **`none`** — Do not auto-seek; if no offset exists, the consumer throws; use when you require an explicit committed offset and want to fail instead of guessing.
+
+Default is often **`latest`**; set **`earliest`** if you want to read from the beginning when the group is new.
 
 ### 8. Key consumer settings
 
