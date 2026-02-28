@@ -30,7 +30,15 @@ This step covers the Kafka consumer: consumer groups, offsets, partition assignm
 
 ### 4. Offset commit and delivery semantics
 
-- Auto-commit vs manual commit; commit-before-process (at-most-once) vs commit-after-process (at-least-once, with risk of reprocessing on failure); exactly-once with transactional consumer or idempotent processing.
+**Auto-commit vs manual commit:** With **auto-commit** (`enable.auto.commit=true`), the consumer periodically commits offsets in the background. With **manual commit**, you call `commitSync()` or `commitAsync()` after you have processed records (or at a chosen point). Manual commit gives control over when the “read position” is advanced, which determines delivery semantics.
+
+**Delivery semantics (how to achieve them):**
+
+- **At-most-once** — Commit **before** processing (or use auto-commit with short interval and process after poll). If the consumer crashes after commit but before or during process, the record is lost (never processed). No duplicates, possible loss.
+- **At-least-once** — Commit **after** processing. If the consumer crashes after process but before commit, it will reprocess the same records after restart. No loss, but possible **duplicates** (reprocessing). This is the common choice when you can tolerate or deduplicate repeats.
+- **Exactly-once** — Each record is processed once. **idempotent processing** (consumer deduplicates by key or id so reprocessing has no effect). More involved to set up; we do not do an exercise here.
+
+We will cover consumer deserialization and schema in practice in the [Step 5 — Schema (Avro)](05-schema.md) step (schema registry, serialization, and deserialization).
 
 ### 5. Partition assignment and rebalance
 
@@ -52,18 +60,6 @@ This step covers the Kafka consumer: consumer groups, offsets, partition assignm
 ### 9. Traps and best practices
 
 - Committing before processing (losing messages on failure); committing too early (duplicate processing); long processing between polls causing rebalance (`max.poll.interval.ms`); not handling rebalance (duplicates or gaps); mixing different `group.id` for same logical app.
-
----
-
-## Exercises (titles — what each will cover)
-
-| # | Exercise title | What it will cover |
-|---|----------------|--------------------|
-| 1 | **Consumer group and partition assignment** | Start multiple consumers in the same group on a topic with 2+ partitions; show each partition is consumed by one consumer; add/remove consumer and observe rebalance. Takeaway: one partition per consumer in group; scaling = more consumers up to partition count. |
-| 2 | **Offsets: committed offset and resume** | Consume some messages, stop consumer, restart with same group; show consumption resumes from committed offset. Compare `auto.offset.reset=earliest` vs `latest` for a new group. Takeaway: committed offset = resume point; no commit = re-read from start (earliest) or miss messages (latest). |
-| 3 | **Manual commit and at-least-once** | Disable auto-commit; consume, process, then commit; show that after crash before commit, messages are reprocessed (at-least-once). Takeaway: manual commit after process for at-least-once; idempotent processing to handle duplicates. |
-| 4 | **Rebalance (optional)** | Run two consumers in same group; kill one and observe rebalance (brief pause, then remaining consumer gets all partitions). Takeaway: rebalance on join/leave; tune timeouts to avoid false rebalances. |
-| 5 | **Conclusion / summary** | Recap: consumer group for scaling; offsets for progress and resume; commit strategy for delivery semantics; rebalance and tuning. Optional table: goal → consumer settings. |
 
 ---
 
