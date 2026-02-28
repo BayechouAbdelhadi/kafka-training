@@ -212,13 +212,21 @@ When the group has **no committed offset** (new group or new partition), **`auto
 
 Default is often **`latest`**; set **`earliest`** if you want to read from the beginning when the group is new.
 
-### 8. Key consumer settings
+### 8. Takeaways and traps
 
-- Reference: `bootstrap.servers`, `group.id`, `enable.auto.commit`, `auto.commit.interval.ms`, `auto.offset.reset`, `session.timeout.ms`, `max.poll.interval.ms`, `fetch.min.bytes`, `key.deserializer`, `value.deserializer`.
+**Takeaways (do this):**
+- **Group and connect** — Set `group.id` for consumer group behaviour; `bootstrap.servers` to reach the cluster.
+- **Commit strategy** — Use **manual commit** (commit after process) for at-least-once; use **auto-commit** only when at-most-once or occasional duplicates are acceptable.
+- **Start position** — Set `auto.offset.reset` to `earliest` when a new group must read from the beginning; default `latest` only reads new messages.
+- **Rebalance** — Tune `session.timeout.ms` and `max.poll.interval.ms` so the consumer has enough time to process between polls and does not trigger unnecessary rebalances.
+- **Deserialization** — Use `key.deserializer` and `value.deserializer` that match the producer (see [Step 5 — Schema](docs/05-schema.md)).
+- **Key settings** — `bootstrap.servers`, `group.id`, `enable.auto.commit`, `auto.commit.interval.ms`, `auto.offset.reset`, `session.timeout.ms`, `max.poll.interval.ms`, `fetch.min.bytes`, `key.deserializer`, `value.deserializer`.
 
-### 9. Traps and best practices
-
-- Committing before processing (losing messages on failure); committing too early (duplicate processing); long processing between polls causing rebalance (`max.poll.interval.ms`); not handling rebalance (duplicates or gaps); mixing different `group.id` for same logical app.
+**Traps (avoid):**
+- **Commit before process** — Committing then processing loses messages if the consumer crashes; commit **after** process for at-least-once.
+- **Commit too early** — Committing before all work is done (e.g. before downstream write) can cause duplicates if you reprocess after failure.
+- **Long processing between polls** — If processing takes longer than `max.poll.interval.ms`, the consumer is considered dead and a rebalance is triggered; process in batches or increase the interval.
+- **Mixing `group.id`** — Using different `group.id` for the same logical application spreads partitions across unrelated groups and can duplicate or skip processing; one app = one group.
 
 ---
 
