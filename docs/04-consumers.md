@@ -64,55 +64,9 @@ A **consumer group** (`group.id`) is a set of consumers that cooperate to consum
 
 #### 2.1 Two groups, two members each (CLI)
 
-You can run **two consumer groups** on **order-topic**, each with **two members**, using the console consumer. Create the topic first (see above). Then open **four** terminals (or run two consumers in the background per group).
+Create the topic first (see above). **First**, run the **producer script** in one terminal so messages are sent to **order-topic** (one per second, key=user, value=order-N). **Then** open **four** more terminals and run the four consumers (two per group).
 
-**Group `notification-sender` — member 1 and 2:**  
-Run in terminal 1 and terminal 2 (same command; same `group.id`):
-
-<!-- tabs:start -->
-
-<!-- tab:Linux / macOS -->
-
-```bash
-docker compose exec -it kafka-1 /opt/kafka/bin/kafka-console-consumer.sh \
-  --topic order-topic \
-  --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 \
-  --group notification-sender \
-  --from-beginning
-```
-
-<!-- tab:Windows -->
-
-```batch
-docker compose exec -it kafka-1 /opt/kafka/bin/kafka-console-consumer.sh --topic order-topic --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 --group notification-sender --from-beginning
-```
-
-<!-- tabs:end -->
-
-**Group `inventory-manager` — member 1 and 2:**  
-Run the same in terminal 3 and terminal 4, but with `--group inventory-manager`:
-
-<!-- tabs:start -->
-
-<!-- tab:Linux / macOS -->
-
-```bash
-docker compose exec -it kafka-1 /opt/kafka/bin/kafka-console-consumer.sh \
-  --topic order-topic \
-  --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 \
-  --group inventory-manager \
-  --from-beginning
-```
-
-<!-- tab:Windows -->
-
-```batch
-docker compose exec -it kafka-1 /opt/kafka/bin/kafka-console-consumer.sh --topic order-topic --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 --group inventory-manager --from-beginning
-```
-
-<!-- tabs:end -->
-
-With **3 partitions** and **2 consumers per group**, Kafka assigns e.g. 2 partitions to one consumer and 1 to the other in each group. To feed the topic, run the **producer script** in another terminal (one message per second):
+**Step 1 — Run the producer** (one terminal; leave it running):
 
 <!-- tabs:start -->
 
@@ -130,13 +84,102 @@ scripts\produce-one-per-second-order-topic.cmd
 
 <!-- tabs:end -->
 
-You will see each message in **both** groups (once in notification-sender, once in inventory-manager), and within each group only **one** of the two members gets each message. Stop the producer and the consumers with **Ctrl+C**.
+The script uses a fixed list of users as keys (**user-alice**, **user-bob**, **user-carol**) in round-robin and sends `key:order-N`.
+
+**Step 2 — Run the four consumers** (one consumer per terminal):
+
+**Group `notification-sender` — member 1 and 2:**  
+Run in terminal 2 and terminal 3 (same command; same `group.id`):
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+docker compose exec -it kafka-1 /opt/kafka/bin/kafka-console-consumer.sh \
+  --topic order-topic \
+  --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 \
+  --group notification-sender \
+  --from-beginning \
+  --property print.key=true \
+  --property key.separator=:
+```
+
+<!-- tab:Windows -->
+
+```batch
+docker compose exec -it kafka-1 /opt/kafka/bin/kafka-console-consumer.sh --topic order-topic --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 --group notification-sender --from-beginning --property print.key=true --property key.separator=:
+```
+
+<!-- tabs:end -->
+
+**Group `inventory-manager` — member 1 and 2:**  
+Run the same in terminal 4 and terminal 5, but with `--group inventory-manager`:
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+docker compose exec -it kafka-1 /opt/kafka/bin/kafka-console-consumer.sh \
+  --topic order-topic \
+  --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 \
+  --group inventory-manager \
+  --from-beginning \
+  --property print.key=true \
+  --property key.separator=:
+```
+
+<!-- tab:Windows -->
+
+```batch
+docker compose exec -it kafka-1 /opt/kafka/bin/kafka-console-consumer.sh --topic order-topic --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 --group inventory-manager --from-beginning --property print.key=true --property key.separator=:
+```
+
+<!-- tabs:end -->
+
+With **3 partitions** and **2 consumers per group**, Kafka assigns e.g. 2 partitions to one consumer and 1 to the other in each group. You will see each message in **both** groups (once in notification-sender, once in inventory-manager), and within each group only **one** of the two members gets each message. Stop the producer and the consumers with **Ctrl+C**.
 
 ### 3. Offsets
 
-- **Partition offset**: position of a record in a partition (per-partition, monotonically increasing).
-- **Committed offset**: last offset the consumer has committed for a partition (where the group will resume after restart or rebalance).
-- **Current position**: next offset to fetch; commit can be automatic (`enable.auto.commit`) or manual (commit after processing for at-least-once processing).
+- **Partition offset** — Position of a record in a partition (per-partition, monotonically increasing). Each record has an offset in its partition.
+- **Committed offset** — The last offset the consumer group has **committed** for a partition. After a restart or rebalance, the group resumes from this offset. Stored in the internal topic `__consumer_offsets`.
+- **Current position** — The next offset the consumer will fetch. It advances as the consumer reads and (with auto-commit or after manual commit) as offsets are committed. Commit can be **automatic** (`enable.auto.commit`) or **manual** (commit after processing for at-least-once).
+
+#### 3.1 Displaying committed offsets (CLI)
+
+To **track or display** committed offsets for a consumer group, use **`kafka-consumer-groups.sh --describe`**. It shows per partition: **CURRENT-OFFSET** (the committed offset; next record to read is at this offset), **LOG-END-OFFSET** (latest offset in the partition), and **LAG** (how many records the group has not yet consumed).
+
+Example for the **notification-sender** group (create the topic and run at least one consumer in that group first, then run describe):
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+docker compose exec kafka-1 /opt/kafka/bin/kafka-consumer-groups.sh \
+  --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 \
+  --group notification-sender \
+  --describe
+```
+
+<!-- tab:Windows -->
+
+```batch
+docker compose exec kafka-1 /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092 --group notification-sender --describe
+```
+
+<!-- tabs:end -->
+
+Example output (topic **order-topic**, 3 partitions):
+
+| TOPIC        | PARTITION | CURRENT-OFFSET | LOG-END-OFFSET | LAG   |
+|--------------|-----------|----------------|----------------|-------|
+| order-topic  | 0         | 5              | 5              | 0     |
+| order-topic  | 1         | 4              | 4              | 0     |
+| order-topic  | 2         | 6              | 6              | 0     |
+
+**CURRENT-OFFSET** is the committed offset (the group will read from this offset next). **LAG** 0 means the group is caught up; if LAG &gt; 0, the group has records left to consume. Run describe again after producing or consuming to see offsets and lag change.
 
 ### 4. Offset commit and delivery semantics
 
