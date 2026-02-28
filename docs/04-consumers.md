@@ -195,8 +195,9 @@ We will cover consumer deserialization and schema in practice in the [Step 5 —
 
 ### 5. Partition assignment and rebalance
 
-- **Partition assignment**: which consumer in the group reads which partitions (range, round-robin, sticky, cooperative sticky); decided by the group coordinator.
-- **Rebalance**: when consumers join or leave the group, partitions are reassigned; during rebalance, consumption may pause; avoid unnecessary rebalances (e.g. long `session.timeout.ms`, `max.poll.interval.ms`).
+**Partition assignment** — The **group coordinator** (a broker) decides which consumer in the group reads which partitions. Each partition is assigned to exactly one consumer in the group.
+
+**Rebalance** — When a consumer **joins** or **leaves** the group (start, stop, crash, or considered dead after timeout), the coordinator triggers a **rebalance**: partition ownership is recalculated. During a rebalance, some partitions are **revoked** from consumers that had them, and (possibly different) partitions are **assigned** to each member. Consumption can **pause** until the rebalance finishes; then consumers fetch from their new assignments. Too frequent rebalances hurt throughput, so avoid unnecessary ones (e.g. tune `session.timeout.ms` and `max.poll.interval.ms` so healthy consumers are not considered dead).
 
 ### 6. Deserialization
 
