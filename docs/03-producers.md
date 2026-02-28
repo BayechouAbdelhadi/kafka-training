@@ -241,7 +241,7 @@ Delivery semantics describe how many times a record can be **delivered** (writte
 ---
 
 
-**Next:** [Step 4 — Consumers](04-consumers.md) — consumer groups, offsets, partition assignment, and rebalance.
+**Next:** [Step 4 — Consumers](docs/04-consumers.md) — consumer groups, offsets, partition assignment, and rebalance.
 
 ---
 
