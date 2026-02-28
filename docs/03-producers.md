@@ -233,7 +233,7 @@ Delivery semantics describe how many times a record can be **delivered** (writte
 - **Weak acks** — `acks=0` or `acks=1` with no `min.insync.replicas` → risk of loss; use `acks=all` for durable writes.
 - **Retries without idempotence** — Retries can write the same record twice; enable idempotence if you want at-least-once without duplicates.
 - **Multiple in-flight without idempotence** — With `max.in.flight` > 1 and retries, order per partition can break; use idempotence or set `max.in.flight=1` (and accept lower throughput).
-- **Serializer/deserializer mismatch** — Producer and consumer must use compatible key/value serialization (see [Step 5 — Schema](05-schema.md) for Avro).
+- **Serializer/deserializer mismatch** — Producer and consumer must use compatible key/value serialization (see [Step 5 — Schema](docs/05-schema.md) for Avro).
 - **No compression** — Skipping compression when payloads are large or network is a bottleneck wastes bandwidth and disk.
 
 **Performant producer in short:** `acks=all` + `enable.idempotence=true` + `compression.type=lz4` (or zstd) + sensible `batch.size` / `linger.ms`; keep default `max.in.flight` (5). You get durability, no duplicates, order, and good throughput.

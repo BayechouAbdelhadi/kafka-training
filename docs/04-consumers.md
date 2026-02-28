@@ -38,7 +38,7 @@ This step covers the Kafka consumer: consumer groups, offsets, partition assignm
 - **At-least-once** — Commit **after** processing. If the consumer crashes after process but before commit, it will reprocess the same records after restart. No loss, but possible **duplicates** (reprocessing). This is the common choice when you can tolerate or deduplicate repeats.
 - **Exactly-once** — Each record is processed once. **idempotent processing** (consumer deduplicates by key or id so reprocessing has no effect). More involved to set up; we do not do an exercise here.
 
-We will cover consumer deserialization and schema in practice in the [Step 5 — Schema (Avro)](05-schema.md) step (schema registry, serialization, and deserialization).
+We will cover consumer deserialization and schema in practice in the [Step 5 — Schema (Avro)](docs/05-schema.md) step (schema registry, serialization, and deserialization).
 
 ### 5. Partition assignment and rebalance
 
