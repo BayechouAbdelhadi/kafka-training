@@ -1,0 +1,34 @@
+{
+  "name": "bottle-supervision",
+  "version": "1.0.0",
+  "description": "Bottle production supervision — event-driven demo (Kafka, TypeScript)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && concurrently -n api,detector,cap,label,shape,automation,tracker -c cyan,magenta,yellow,yellow,yellow,green,blue \"npm run api\" \"npm run detector\" \"npm run analyzer-cap\" \"npm run analyzer-label\" \"npm run analyzer-shape\" \"npm run automation\" \"npm run tracker\"",
+    "detector": "node dist/detector/run.js",
+    "analyzer-cap": "node dist/analyzer-cap/run.js",
+    "analyzer-label": "node dist/analyzer-label/run.js",
+    "analyzer-shape": "node dist/analyzer-shape/run.js",
+    "automation": "node dist/automation/run.js",
+    "tracker": "node dist/bottle-tracking/run.js",
+    "api": "node dist/api/run.js"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4",
+    "express": "^4.21.0",
+    "swagger-ui-express": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.0.0",
+    "@types/swagger-ui-express": "^4.1.6",
+    "concurrently": "^9.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

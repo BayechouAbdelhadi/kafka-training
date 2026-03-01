@@ -24,6 +24,57 @@ We implement a **real-life example** to practice Schema Registry and Avro in pra
 
 ![Bottle supervision — flow and architecture](../assets/bottle-supervision-flow-architecture.png)
 
+### Creating the topics
+
+Create the three Kafka topics from the **project root** (cluster must be running). Each topic has **3 partitions**, **replication factor 3**, and **min.insync.replicas=2**.
+
+<!-- tabs:start -->
+
+<!-- tab:Linux / macOS -->
+
+```bash
+sh scripts/create-topics-bottle-supervision.sh
+```
+
+Or by hand:
+
+```bash
+docker compose exec kafka-1 /opt/kafka/bin/kafka-topics.sh --create \
+  --topic bottle.detected \
+  --partitions 3 \
+  --replication-factor 3 \
+  --config min.insync.replicas=2 \
+  --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092
+docker compose exec kafka-1 /opt/kafka/bin/kafka-topics.sh --create \
+  --topic bottle.analysis.result \
+  --partitions 3 \
+  --replication-factor 3 \
+  --config min.insync.replicas=2 \
+  --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092
+docker compose exec kafka-1 /opt/kafka/bin/kafka-topics.sh --create \
+  --topic bottle.rejected \
+  --partitions 3 \
+  --replication-factor 3 \
+  --config min.insync.replicas=2 \
+  --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092
+```
+
+<!-- tab:Windows -->
+
+```batch
+scripts\create-topics-bottle-supervision.cmd
+```
+
+Or by hand (one topic per line):
+
+```batch
+docker compose exec kafka-1 /opt/kafka/bin/kafka-topics.sh --create --topic bottle.detected --partitions 3 --replication-factor 3 --config min.insync.replicas=2 --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092
+docker compose exec kafka-1 /opt/kafka/bin/kafka-topics.sh --create --topic bottle.analysis.result --partitions 3 --replication-factor 3 --config min.insync.replicas=2 --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092
+docker compose exec kafka-1 /opt/kafka/bin/kafka-topics.sh --create --topic bottle.rejected --partitions 3 --replication-factor 3 --config min.insync.replicas=2 --bootstrap-server kafka-1:9092,kafka-2:9092,kafka-3:9092,kafka-4:9092
+```
+
+<!-- tabs:end -->
+
 ---
 
 ## Content to cover
