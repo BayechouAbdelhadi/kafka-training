@@ -1,15 +1,15 @@
 import { config } from "../shared/config.js";
-import { createApp } from "./controller.js";
+import { createApp } from "./app.js";
 import * as analyzerService from "./service.js";
 
-const port = config.ports.analyzerCap;
+const port = config.ports.analyzerLabel;
 
 async function main() {
   await analyzerService.startAnalyzer();
 
   const app = createApp();
   app.listen(port, () => {
-    console.log(`Analyzer Cap HTTP server on http://localhost:${port}`);
+    console.log(`Analyzer Label HTTP server on http://localhost:${port}`);
   });
 }
 

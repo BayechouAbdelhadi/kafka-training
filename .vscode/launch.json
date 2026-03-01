@@ -6,7 +6,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--inspect=9229", "dist/api/run.js"],
+      "runtimeArgs": ["--inspect=9229", "dist/api/main.js"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     },
@@ -15,7 +15,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--inspect=9230", "dist/detector/run.js"],
+      "runtimeArgs": ["--inspect=9230", "dist/detector/main.js"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     },
@@ -24,7 +24,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--inspect=9231", "dist/analyzer-cap/run.js"],
+      "runtimeArgs": ["--inspect=9231", "dist/analyzer-cap/main.js"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     },
@@ -33,7 +33,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--inspect=9232", "dist/analyzer-label/run.js"],
+      "runtimeArgs": ["--inspect=9232", "dist/analyzer-label/main.js"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     },
@@ -42,7 +42,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--inspect=9233", "dist/analyzer-shape/run.js"],
+      "runtimeArgs": ["--inspect=9233", "dist/analyzer-shape/main.js"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     },
@@ -51,7 +51,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--inspect=9234", "dist/automation/run.js"],
+      "runtimeArgs": ["--inspect=9234", "dist/automation/main.js"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     },
@@ -60,7 +60,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--inspect=9235", "dist/bottle-tracking/run.js"],
+      "runtimeArgs": ["--inspect=9235", "dist/bottle-tracking/main.js"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     },

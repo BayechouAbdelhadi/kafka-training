@@ -1,16 +1,11 @@
-import express, { type Request, type Response } from "express";
+import { Router, type Request, type Response } from "express";
 import type { Producer } from "kafkajs";
-import * as detectorService from "./service.js";
+import * as detectorService from "../service.js";
 
-export function createApp(producer: Producer): express.Express {
-  const app = express();
-  app.use(express.json());
+export function detectionsRouter(producer: Producer): Router {
+  const router = Router();
 
-  app.get("/health", (_req: Request, res: Response) => {
-    res.json({ ok: true, service: "detector" });
-  });
-
-  app.post("/detections", (req: Request, res: Response) => {
+  router.post("/", (req: Request, res: Response) => {
     const bottleId = req.body?.bottleId;
     if (typeof bottleId !== "string" || !bottleId.trim()) {
       return res.status(400).json({ error: "bottleId (string) required" });
@@ -28,5 +23,5 @@ export function createApp(producer: Producer): express.Express {
       });
   });
 
-  return app;
+  return router;
 }

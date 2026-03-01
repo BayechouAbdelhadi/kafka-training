@@ -1,6 +1,6 @@
 import { getKafka } from "../kafka/client.js";
 import { config } from "../shared/config.js";
-import { createApp } from "./controller.js";
+import { createApp } from "./app.js";
 
 const port = config.ports.detector;
 

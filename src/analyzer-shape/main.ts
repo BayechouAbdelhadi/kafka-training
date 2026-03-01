@@ -1,5 +1,5 @@
 import { config } from "../shared/config.js";
-import { createApp } from "./controller.js";
+import { createApp } from "./app.js";
 import * as analyzerService from "./service.js";
 
 const port = config.ports.analyzerShape;

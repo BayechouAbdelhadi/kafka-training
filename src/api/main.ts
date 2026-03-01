@@ -1,6 +1,6 @@
 import swaggerUi from "swagger-ui-express";
 import { config } from "../shared/config.js";
-import { createApp } from "./controller.js";
+import { createApp } from "./app.js";
 
 const swaggerDoc = {
   openapi: "3.0.0",

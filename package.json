@@ -6,15 +6,15 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "debug": "npm run build && concurrently -n api,detector,cap,label,shape,automation,tracker -c cyan,magenta,yellow,yellow,yellow,green,blue \"node --inspect=9229 dist/api/run.js\" \"node --inspect=9230 dist/detector/run.js\" \"node --inspect=9231 dist/analyzer-cap/run.js\" \"node --inspect=9232 dist/analyzer-label/run.js\" \"node --inspect=9233 dist/analyzer-shape/run.js\" \"node --inspect=9234 dist/automation/run.js\" \"node --inspect=9235 dist/bottle-tracking/run.js\"",
+    "debug": "npm run build && concurrently -n api,detector,cap,label,shape,automation,tracker -c cyan,magenta,yellow,yellow,yellow,green,blue \"node --inspect=9229 dist/api/main.js\" \"node --inspect=9230 dist/detector/main.js\" \"node --inspect=9231 dist/analyzer-cap/main.js\" \"node --inspect=9232 dist/analyzer-label/main.js\" \"node --inspect=9233 dist/analyzer-shape/main.js\" \"node --inspect=9234 dist/automation/main.js\" \"node --inspect=9235 dist/bottle-tracking/main.js\"",
     "start": "npm run build && concurrently -n api,detector,cap,label,shape,automation,tracker -c cyan,magenta,yellow,yellow,yellow,green,blue \"npm run api\" \"npm run detector\" \"npm run analyzer-cap\" \"npm run analyzer-label\" \"npm run analyzer-shape\" \"npm run automation\" \"npm run tracker\"",
-    "detector": "node dist/detector/run.js",
-    "analyzer-cap": "node dist/analyzer-cap/run.js",
-    "analyzer-label": "node dist/analyzer-label/run.js",
-    "analyzer-shape": "node dist/analyzer-shape/run.js",
-    "automation": "node dist/automation/run.js",
-    "tracker": "node dist/bottle-tracking/run.js",
-    "api": "node dist/api/run.js"
+    "detector": "node dist/detector/main.js",
+    "analyzer-cap": "node dist/analyzer-cap/main.js",
+    "analyzer-label": "node dist/analyzer-label/main.js",
+    "analyzer-shape": "node dist/analyzer-shape/main.js",
+    "automation": "node dist/automation/main.js",
+    "tracker": "node dist/bottle-tracking/main.js",
+    "api": "node dist/api/main.js"
   },
   "dependencies": {
     "kafkajs": "^2.2.4",

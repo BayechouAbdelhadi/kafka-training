@@ -1,5 +1,6 @@
-import { runAnalyzer } from "../shared/analyzerRunner.js";
+import { CapAnalyzer } from "./analyzer.js";
 
 export async function startAnalyzer(): Promise<void> {
-  await runAnalyzer("cap");
+  const analyzer = new CapAnalyzer();
+  await analyzer.run();
 }
