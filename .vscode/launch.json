@@ -1,0 +1,132 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "API",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--inspect=9229", "dist/api/run.js"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Detector",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--inspect=9230", "dist/detector/run.js"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Analyzer Cap",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--inspect=9231", "dist/analyzer-cap/run.js"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Analyzer Label",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--inspect=9232", "dist/analyzer-label/run.js"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Analyzer Shape",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--inspect=9233", "dist/analyzer-shape/run.js"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Automation",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--inspect=9234", "dist/automation/run.js"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Tracker",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--inspect=9235", "dist/bottle-tracking/run.js"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Attach to API",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "restart": true
+    },
+    {
+      "name": "Attach to Detector",
+      "type": "node",
+      "request": "attach",
+      "port": 9230,
+      "restart": true
+    },
+    {
+      "name": "Attach to Analyzer Cap",
+      "type": "node",
+      "request": "attach",
+      "port": 9231,
+      "restart": true
+    },
+    {
+      "name": "Attach to Analyzer Label",
+      "type": "node",
+      "request": "attach",
+      "port": 9232,
+      "restart": true
+    },
+    {
+      "name": "Attach to Analyzer Shape",
+      "type": "node",
+      "request": "attach",
+      "port": 9233,
+      "restart": true
+    },
+    {
+      "name": "Attach to Automation",
+      "type": "node",
+      "request": "attach",
+      "port": 9234,
+      "restart": true
+    },
+    {
+      "name": "Attach to Tracker",
+      "type": "node",
+      "request": "attach",
+      "port": 9235,
+      "restart": true
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Bottle: All",
+      "configurations": [
+        "API",
+        "Detector",
+        "Analyzer Cap",
+        "Analyzer Label",
+        "Analyzer Shape",
+        "Automation",
+        "Tracker"
+      ],
+      "stopAll": true
+    }
+  ]
+}
