@@ -12,6 +12,20 @@ This step covers **Avro schema** with Kafka: schema creation, evolution, compati
 
 ---
 
+## What we will build in this step
+
+We implement a **real-life example** to practice Schema Registry and Avro in practice: a **bottle production supervision system** (event-driven, mock-based — no real hardware or AI). It demonstrates schema definition, serialization/deserialization, and event flow end to end.
+
+**Scenario:** A bottle production line is supervised by events. A **detector** (mock) periodically emits “bottle detected” events (bottleId, timestamp, imageUrl). Several **analyzers** (e.g. cap, label, shape — each in its own consumer group) consume those events, run a mock analysis (pass/fail), and publish **analysis results**. An **automation** service consumes analysis results and, when any analysis fails, marks the bottle for rejection and publishes to **bottle.rejected**. A **bottle-tracking** module keeps in-memory state (detected, valid, to_reject, rejected) and a **REST API** (Express, Swagger) exposes bottles, analysis, and statistics.
+
+**Event flow:** Detector → `bottle.detected` → Analyzers (parallel) → `bottle.analysis.result` → Automation → `bottle.rejected`; the tracking module and API reflect the current state.
+
+**Stack:** TypeScript, **Apache Kafka**, **Confluent Kafka JS**, **Schema Registry**, Avro for key/value, Express.js, Swagger, modular monolith (detector, analysis, automation, bottle-tracking, api, kafka, shared). We use JSON/Avro serialization, partition key by bottleId, manual offset commit, and safe rebalance handling. This system is the basis for the schema and Schema Registry exercises in this step.
+
+![Bottle supervision — flow and architecture](../assets/bottle-supervision-flow-architecture.png)
+
+---
+
 ## Content to cover
 
 ### 1. Why schema with Kafka
