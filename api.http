@@ -1,0 +1,13 @@
+@apiUrl = http://localhost:3009
+
+### List all bottles (state from tracker)
+GET {{apiUrl}}/bottles
+
+### Get one bottle by id
+GET {{apiUrl}}/bottles/bottle-0001
+
+### List bottles by status: detected | valid | to_reject | rejected
+GET {{apiUrl}}/bottles/status/detected
+
+### Counts by status
+GET {{apiUrl}}/stats

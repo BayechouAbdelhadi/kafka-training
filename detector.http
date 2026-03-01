@@ -1,0 +1,9 @@
+@detectorUrl = http://localhost:3010
+
+### POST detection -> app.post("/detections", ...)
+POST {{detectorUrl}}/detections
+Content-Type: application/json
+
+{
+  "bottleId": "bottle-0001"
+}
