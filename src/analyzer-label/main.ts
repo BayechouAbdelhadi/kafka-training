@@ -1,19 +1,13 @@
 import { config } from "../shared/config.js";
+import { runApp } from "../shared/appFactory.js";
 import { createApp } from "./app.js";
-import * as analyzerService from "./service.js";
+import { AnalyzerLabelBootstrapService } from "./bootstrapService.js";
 
-const port = config.ports.analyzerLabel;
-
-async function main() {
-  await analyzerService.startAnalyzer();
-
-  const app = createApp();
-  app.listen(port, () => {
-    console.log(`Analyzer Label HTTP server on http://localhost:${port}`);
-  });
-}
-
-main().catch((e: unknown) => {
+runApp({
+  port: config.ports.analyzerLabel,
+  createApp,
+  bootstrapService: new AnalyzerLabelBootstrapService(),
+}).catch((e: unknown) => {
   console.error(e);
   process.exit(1);
 });

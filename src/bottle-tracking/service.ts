@@ -1,14 +1,7 @@
-import { getKafka } from "../kafka/client.js";
+import { BottleTrackerConsumer } from "../kafka/consumers/BottleTrackerConsumer.js";
 import { config } from "../shared/config.js";
 import type { BottleDetected, BottleAnalysisResult, BottleRejected, BottleStatus } from "../shared/types.js";
 import type * as repo from "./repository.js";
-
-const TOPICS = [
-  config.topics.bottleDetected,
-  config.topics.bottleAnalysisResult,
-  config.topics.bottleRejected,
-] as const;
-const CONSUMER_GROUP = "bottle-tracker";
 
 const pendingResults = new Map<string, BottleAnalysisResult[]>();
 
@@ -18,12 +11,14 @@ function getStatus(results: BottleAnalysisResult[]): BottleStatus {
   return failed ? "to_reject" : "valid";
 }
 
-export async function startTracker(repository: typeof repo): Promise<void> {
-  const kafka = getKafka();
-  const consumer = kafka.consumer({ groupId: CONSUMER_GROUP });
-  await consumer.connect();
-  await consumer.subscribe({ topics: [...TOPICS], fromBeginning: true });
+export interface TrackerKafkaHandle {
+  disconnect(): Promise<void>;
+}
 
+export async function startTracker(repository: typeof repo): Promise<TrackerKafkaHandle> {
+  const groupId = config.kafka.consumerGroups.tracker;
+  const consumer = await BottleTrackerConsumer.create(groupId);
+  await consumer.subscribe(true);
   await consumer.run({
     eachMessage: async ({ topic, message }) => {
       const key = message.key?.toString();
@@ -68,5 +63,11 @@ export async function startTracker(repository: typeof repo): Promise<void> {
     },
   });
 
-  console.log(`Bottle tracker consuming [${TOPICS.join(", ")}], updating in-memory DB.`);
+  console.log(`Bottle tracker consuming [${[config.topics.bottleDetected, config.topics.bottleAnalysisResult, config.topics.bottleRejected].join(", ")}], updating in-memory DB.`);
+
+  return {
+    async disconnect() {
+      await consumer.disconnect();
+    },
+  };
 }

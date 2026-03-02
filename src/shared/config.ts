@@ -6,6 +6,10 @@ export const config = {
   kafka: {
     // Host: localhost (brokers advertise EXTERNAL localhost in docker-compose). From inside Docker use kafka-1:9092,...
     bootstrapServers: process.env.KAFKA_BOOTSTRAP_SERVERS ?? "localhost:9092,localhost:9094,localhost:9095,localhost:9096",
+    consumerGroups: {
+      automation: "automation",
+      tracker: "bottle-tracker",
+    },
   },
   topics: {
     bottleDetected: "bottle.detected",

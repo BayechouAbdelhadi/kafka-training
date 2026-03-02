@@ -1,5 +1,6 @@
 import swaggerUi from "swagger-ui-express";
 import { config } from "../shared/config.js";
+import { runApp } from "../shared/appFactory.js";
 import { createApp } from "./app.js";
 
 const swaggerDoc = {
@@ -42,17 +43,13 @@ const swaggerDoc = {
   },
 };
 
-const app = createApp();
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
-
-const port = config.ports.api;
-const server = app.listen(port, () => {
-  console.log(`REST API listening on http://localhost:${port}; Swagger at http://localhost:${port}/api-docs`);
-});
-server.on("error", (err: NodeJS.ErrnoException) => {
-  if (err.code === "EADDRINUSE") {
-    console.error(`Port ${port} is already in use. Stop the other process or set API_PORT to a different port.`);
-    process.exit(1);
-  }
-  throw err;
+runApp({
+  port: config.ports.api,
+  createApp,
+  mount: (app) => {
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+  },
+  }).catch((e: unknown) => {
+  console.error(e);
+  process.exit(1);
 });

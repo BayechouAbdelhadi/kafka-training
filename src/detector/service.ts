@@ -1,11 +1,8 @@
+import type { BottleDetectedProducer } from "../kafka/producers/BottleDetectedProducer.js";
 import type { BottleDetected } from "../shared/types.js";
-import type { Producer } from "kafkajs";
-import { config } from "../shared/config.js";
-
-const TOPIC = config.topics.bottleDetected;
 
 export async function publishDetection(
-  producer: Producer,
+  producer: BottleDetectedProducer,
   bottleId: string,
   imageUrl?: string
 ): Promise<BottleDetected> {
@@ -18,9 +15,6 @@ export async function publishDetection(
         ? imageUrl.trim()
         : `https://example.com/capture/${bottleId.trim()}.jpg`,
   };
-  await producer.send({
-    topic: TOPIC,
-    messages: [{ key: payload.bottleId, value: JSON.stringify(payload) }],
-  });
+  await producer.send([{ key: payload.bottleId, value: JSON.stringify(payload) }]);
   return payload;
 }

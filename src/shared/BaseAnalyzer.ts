@@ -1,29 +1,36 @@
 import type { EachMessagePayload } from "kafkajs";
-import { getKafka } from "../kafka/client.js";
+import { BottleAnalysisResultProducer } from "../kafka/producers/BottleAnalysisResultProducer.js";
+import { BottleDetectedConsumer } from "../kafka/consumers/BottleDetectedConsumer.js";
 import { config } from "./config.js";
 import type { BottleDetected, BottleAnalysisResult } from "./types.js";
 
 export type AnalyzerName = "cap" | "label" | "shape";
 
 export abstract class BaseAnalyzer {
+  protected consumer!: BottleDetectedConsumer;
+  protected producer!: BottleAnalysisResultProducer;
+  protected consumerGroupId!: string;
+
   abstract get name(): AnalyzerName;
 
   /** Analyze a detected bottle; subclasses implement actual logic. */
   abstract analyze(payload: BottleDetected): boolean;
 
+  /** Disconnect Kafka consumer and producer (call on shutdown). */
+  async disconnect(): Promise<void> {
+    await this.consumer.disconnect();
+    await this.producer.disconnect();
+  }
+
   async run(): Promise<void> {
-    const consumerGroup = `analyzer-${this.name}`;
+    this.consumerGroupId = `analyzer-${this.name}`;
     const topicIn = config.topics.bottleDetected;
     const topicOut = config.topics.bottleAnalysisResult;
 
-    const kafka = getKafka();
-    const consumer = kafka.consumer({ groupId: consumerGroup });
-    const producer = kafka.producer();
-    await consumer.connect();
-    await producer.connect();
-    await consumer.subscribe({ topic: topicIn, fromBeginning: true });
-
-    await consumer.run({
+    this.consumer = await BottleDetectedConsumer.create(this.consumerGroupId);
+    this.producer = await BottleAnalysisResultProducer.create();
+    await this.consumer.subscribe(true);
+    await this.consumer.run({
       eachMessage: async ({ message }: EachMessagePayload) => {
         const key = message.key?.toString();
         const raw = message.value?.toString();
@@ -42,14 +49,11 @@ export abstract class BaseAnalyzer {
           timestamp: new Date().toISOString(),
           details: passed ? undefined : `${this.name} check failed`,
         };
-        await producer.send({
-          topic: topicOut,
-          messages: [{ key: payload.bottleId, value: JSON.stringify(result) }],
-        });
+        await this.producer.send([{ key: payload.bottleId, value: JSON.stringify(result) }]);
         console.log(`${this.name}: ${payload.bottleId} -> ${passed ? "pass" : "fail"}`);
       },
     });
 
-    console.log(`Analyzer "${this.name}" consuming ${topicIn} (group ${consumerGroup}), producing to ${topicOut}.`);
+    console.log(`Analyzer "${this.name}" consuming ${topicIn} (group ${this.consumerGroupId}), producing to ${topicOut}.`);
   }
 }

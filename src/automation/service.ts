@@ -1,11 +1,11 @@
 import type { EachMessagePayload } from "kafkajs";
-import { getKafka } from "../kafka/client.js";
+import { BottleAnalysisResultConsumer } from "../kafka/consumers/BottleAnalysisResultConsumer.js";
+import { BottleRejectedProducer } from "../kafka/producers/BottleRejectedProducer.js";
 import { config } from "../shared/config.js";
 import type { BottleAnalysisResult, BottleRejected } from "../shared/types.js";
 
 const TOPIC_IN = config.topics.bottleAnalysisResult;
 const TOPIC_OUT = config.topics.bottleRejected;
-const CONSUMER_GROUP = "automation";
 
 const pending = new Map<string, { results: BottleAnalysisResult[] }>();
 
@@ -18,14 +18,15 @@ function allAnalyzersReported(results: BottleAnalysisResult[]): boolean {
   return analyzers.has("cap") && analyzers.has("label") && analyzers.has("shape");
 }
 
-export async function startAutomation(): Promise<void> {
-  const kafka = getKafka();
-  const consumer = kafka.consumer({ groupId: CONSUMER_GROUP });
-  const producer = kafka.producer();
-  await consumer.connect();
-  await producer.connect();
-  await consumer.subscribe({ topic: TOPIC_IN, fromBeginning: true });
+export interface AutomationKafkaHandle {
+  disconnect(): Promise<void>;
+}
 
+export async function startAutomation(): Promise<AutomationKafkaHandle> {
+  const groupId = config.kafka.consumerGroups.automation;
+  const consumer = await BottleAnalysisResultConsumer.create(groupId);
+  const producer = await BottleRejectedProducer.create();
+  await consumer.subscribe(true);
   await consumer.run({
     eachMessage: async ({ message }: EachMessagePayload) => {
       const raw = message.value?.toString();
@@ -51,14 +52,18 @@ export async function startAutomation(): Promise<void> {
           reason: `Failed: ${failed.join(", ")}`,
           timestamp: new Date().toISOString(),
         };
-        await producer.send({
-          topic: TOPIC_OUT,
-          messages: [{ key: bottleId, value: JSON.stringify(payload) }],
-        });
+        await producer.send([{ key: bottleId, value: JSON.stringify(payload) }]);
         console.log(`Rejected: ${bottleId} (${payload.reason})`);
       }
     },
   });
 
   console.log(`Automation consuming ${TOPIC_IN}, producing to ${TOPIC_OUT} when any analysis fails.`);
+
+  return {
+    async disconnect() {
+      await consumer.disconnect();
+      await producer.disconnect();
+    },
+  };
 }

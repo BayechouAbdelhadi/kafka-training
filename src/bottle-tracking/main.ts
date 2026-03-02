@@ -1,20 +1,13 @@
 import { config } from "../shared/config.js";
+import { runApp } from "../shared/appFactory.js";
 import { createApp } from "./app.js";
-import * as trackerRepository from "./repository.js";
-import * as trackerService from "./service.js";
+import { TrackerBootstrapService } from "./bootstrapService.js";
 
-const port = config.ports.tracker;
-
-async function main() {
-  await trackerService.startTracker(trackerRepository);
-
-  const app = createApp();
-  app.listen(port, () => {
-    console.log(`Bottle Tracker HTTP server on http://localhost:${port}`);
-  });
-}
-
-main().catch((e: unknown) => {
+runApp({
+  port: config.ports.tracker,
+  createApp,
+  bootstrapService: new TrackerBootstrapService(),
+}).catch((e: unknown) => {
   console.error(e);
   process.exit(1);
 });
