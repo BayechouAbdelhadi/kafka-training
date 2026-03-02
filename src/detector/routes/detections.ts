@@ -1,34 +1,34 @@
 import { Router, type Request, type Response } from "express";
-import type { BottleDetectedProducer } from "../../kafka/producers/BottleDetectedProducer";
-import * as detectorService from "../service";
+import type { BottleDetected } from "../../shared/types";
+import type { DetectorProcessor } from "../processor";
 
 /** Express app.locals type for detector (set in main). */
 export interface DetectorLocals {
-  kafkaProducer: BottleDetectedProducer;
+  detectorProcessor: DetectorProcessor;
 }
 
 const router = Router();
 
-router.post("/", (req: Request, res: Response) => {
-  const producer = (req.app.locals as DetectorLocals).kafkaProducer;
-  if (!producer) {
-    return res.status(503).json({ error: "Kafka producer not ready" });
+router.post("/", async (req: Request, res: Response) => {
+  const processor = (req.app.locals as DetectorLocals).detectorProcessor;
+  if (!processor) {
+    return res.status(503).json({ error: "Detector processor not ready" });
   }
   const bottleId = req.body?.bottleId;
   if (typeof bottleId !== "string" || !bottleId.trim()) {
     return res.status(400).json({ error: "bottleId (string) required" });
   }
   const imageUrl = req.body?.imageUrl;
-  detectorService
-    .publishDetection(producer, bottleId, imageUrl)
-    .then((payload) => {
-      console.log("Detected:", payload.bottleId);
-      res.status(201).json(payload);
-    })
-    .catch((e: unknown) => {
-      console.error("Send error:", e);
-      res.status(502).json({ error: "Failed to publish detection" });
-    });
+ 
+  const result = await processor.process(bottleId, imageUrl);
+  
+  if (!result) {
+    return res.status(502).json({ error: "Failed to process detection" });
+  }
+
+  const payload = result as BottleDetected;
+  console.log("Detected:", payload.bottleId);
+  res.status(201).json(payload);
 });
 
 export const detectionsRouter = router;

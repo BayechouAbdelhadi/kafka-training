@@ -3,10 +3,11 @@ import { BottleAnalysisResultProducer } from "../kafka/producers/BottleAnalysisR
 import { BottleDetectedConsumer } from "../kafka/consumers/BottleDetectedConsumer";
 import { config } from "./config";
 import type { BottleDetected, BottleAnalysisResult } from "./types";
+import { Processor } from "./Processor";
 
 export type AnalyzerName = "cap" | "label" | "shape";
 
-export abstract class BaseAnalyzer {
+export abstract class BaseAnalyzer extends Processor {
   protected consumer!: BottleDetectedConsumer;
   protected producer!: BottleAnalysisResultProducer;
   protected consumerGroupId!: string;
@@ -16,13 +17,7 @@ export abstract class BaseAnalyzer {
   /** Analyze a detected bottle; subclasses implement actual logic. */
   abstract analyze(payload: BottleDetected): boolean;
 
-  /** Disconnect Kafka consumer and producer (call on shutdown). */
-  async disconnect(): Promise<void> {
-    await this.consumer.disconnect();
-    await this.producer.disconnect();
-  }
-
-  async run(): Promise<void> {
+  async process(..._args: unknown[]): Promise<void> {
     this.consumerGroupId = `analyzer-${this.name}`;
     const topicIn = config.topics.bottleDetected;
     const topicOut = config.topics.bottleAnalysisResult;
@@ -55,5 +50,10 @@ export abstract class BaseAnalyzer {
     });
 
     console.log(`Analyzer "${this.name}" consuming ${topicIn} (group ${this.consumerGroupId}), producing to ${topicOut}.`);
+  }
+
+  async cleanUp(): Promise<void> {
+    await this.consumer.disconnect();
+    await this.producer.disconnect();
   }
 }

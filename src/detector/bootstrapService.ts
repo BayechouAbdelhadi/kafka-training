@@ -1,20 +1,20 @@
-import { BottleDetectedProducer } from "../kafka/producers/BottleDetectedProducer";
 import { BootstrapService } from "../shared/BootstrapService";
+import { DetectorProcessor } from "./processor";
 
 export class DetectorBootstrapService extends BootstrapService {
-  private producer: BottleDetectedProducer | null = null;
+  private processor: DetectorProcessor | null = null;
 
   async onApplicationBootstrap(): Promise<{
     locals?: Record<string, unknown>;
   }> {
-    this.producer = await BottleDetectedProducer.create();
-    return { locals: { kafkaProducer: this.producer } };
+    this.processor = await DetectorProcessor.create();
+    return { locals: { detectorProcessor: this.processor } };
   }
 
   async onApplicationShutDown(): Promise<void> {
-    if (this.producer) {
-      await this.producer.disconnect();
-      this.producer = null;
+    if (this.processor) {
+      await this.processor.cleanUp();
+      this.processor = null;
     }
   }
 }

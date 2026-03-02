@@ -15,7 +15,7 @@ export class AnalyzerCapBootstrapService extends BootstrapService {
 
   async onApplicationShutDown(): Promise<void> {
     if (this.analyzer) {
-      await this.analyzer.disconnect();
+      await this.analyzer.cleanUp();
       this.analyzer = null;
     }
   }
