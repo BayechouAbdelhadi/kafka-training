@@ -1,7 +1,7 @@
 import express from "express";
-import { bottlesRouter } from "./routes/bottles.js";
-import { healthRouter } from "./routes/health.js";
-import { statsRouter } from "./routes/stats.js";
+import { bottlesRouter } from "./routes/bottles";
+import { healthRouter } from "./routes/health";
+import { statsRouter } from "./routes/stats";
 
 export function createApp(): express.Express {
   const app = express();

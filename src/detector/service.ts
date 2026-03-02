@@ -1,5 +1,5 @@
-import type { BottleDetectedProducer } from "../kafka/producers/BottleDetectedProducer.js";
-import type { BottleDetected } from "../shared/types.js";
+import type { BottleDetectedProducer } from "../kafka/producers/BottleDetectedProducer";
+import type { BottleDetected } from "../shared/types";
 
 export async function publishDetection(
   producer: BottleDetectedProducer,

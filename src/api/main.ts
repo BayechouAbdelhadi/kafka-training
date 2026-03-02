@@ -1,7 +1,7 @@
 import swaggerUi from "swagger-ui-express";
-import { config } from "../shared/config.js";
-import { runApp } from "../shared/appFactory.js";
-import { createApp } from "./app.js";
+import { config } from "../shared/config";
+import { runApp } from "../shared/appFactory";
+import { createApp } from "./app";
 
 const swaggerDoc = {
   openapi: "3.0.0",
@@ -43,13 +43,15 @@ const swaggerDoc = {
   },
 };
 
+const app = createApp();
+
 runApp({
   port: config.ports.api,
-  createApp,
-  mount: (app) => {
-    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+  app,
+  mount: (expressApp) => {
+    expressApp.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
   },
-  }).catch((e: unknown) => {
+}).catch((e: unknown) => {
   console.error(e);
   process.exit(1);
 });

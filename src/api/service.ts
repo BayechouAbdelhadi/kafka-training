@@ -1,5 +1,5 @@
-import type { BottleState } from "../shared/types.js";
-import * as repository from "./repository.js";
+import type { BottleState } from "../shared/types";
+import * as repository from "./repository";
 
 export function getAllBottles(): BottleState[] {
   return repository.getAllBottles();

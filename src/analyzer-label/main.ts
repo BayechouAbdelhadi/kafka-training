@@ -1,11 +1,13 @@
-import { config } from "../shared/config.js";
-import { runApp } from "../shared/appFactory.js";
-import { createApp } from "./app.js";
-import { AnalyzerLabelBootstrapService } from "./bootstrapService.js";
+import { config } from "../shared/config";
+import { runApp } from "../shared/appFactory";
+import { createApp } from "./app";
+import { AnalyzerLabelBootstrapService } from "./bootstrapService";
+
+const app = createApp();
 
 runApp({
   port: config.ports.analyzerLabel,
-  createApp,
+  app,
   bootstrapService: new AnalyzerLabelBootstrapService(),
 }).catch((e: unknown) => {
   console.error(e);

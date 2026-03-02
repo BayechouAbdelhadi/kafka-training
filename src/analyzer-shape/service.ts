@@ -1,4 +1,4 @@
-import { ShapeAnalyzer } from "./analyzer.js";
+import { ShapeAnalyzer } from "./analyzer";
 
 export async function startAnalyzer(): Promise<ShapeAnalyzer> {
   const analyzer = new ShapeAnalyzer();

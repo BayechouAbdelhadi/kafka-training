@@ -1,6 +1,6 @@
 import type { Consumer as KafkajsConsumer, ConsumerRunConfig } from "kafkajs";
-import { getKafka } from "../client.js";
-import { config } from "../../shared/config.js";
+import { KafkaClient } from "../client";
+import { config } from "../../shared/config";
 
 /** Consumes from topic bottle.detected (e.g. analyzers). */
 export class BottleDetectedConsumer {
@@ -11,7 +11,7 @@ export class BottleDetectedConsumer {
   }
 
   static async create(groupId: string): Promise<BottleDetectedConsumer> {
-    const consumer = getKafka().consumer({ groupId });
+    const consumer = KafkaClient.create().createConsumer(groupId);
     await consumer.connect();
     return new BottleDetectedConsumer(consumer);
   }

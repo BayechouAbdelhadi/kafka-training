@@ -1,4 +1,4 @@
-import { CapAnalyzer } from "./analyzer.js";
+import { CapAnalyzer } from "./analyzer";
 
 export async function startAnalyzer(): Promise<CapAnalyzer> {
   const analyzer = new CapAnalyzer();

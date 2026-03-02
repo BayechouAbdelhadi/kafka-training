@@ -1,11 +1,13 @@
-import { config } from "../shared/config.js";
-import { runApp } from "../shared/appFactory.js";
-import { createApp } from "./app.js";
-import { AutomationBootstrapService } from "./bootstrapService.js";
+import { config } from "../shared/config";
+import { runApp } from "../shared/appFactory";
+import { createApp } from "./app";
+import { AutomationBootstrapService } from "./bootstrapService";
+
+const app = createApp();
 
 runApp({
   port: config.ports.automation,
-  createApp,
+  app,
   bootstrapService: new AutomationBootstrapService(),
 }).catch((e: unknown) => {
   console.error(e);

@@ -1,11 +1,12 @@
-import { config } from "../shared/config.js";
-import { runApp } from "../shared/appFactory.js";
-import { createApp } from "./app.js";
-import { DetectorBootstrapService } from "./bootstrapService.js";
+import { config } from "../shared/config";
+import { runApp } from "../shared/appFactory";
+import { createApp } from "./app";
+import { DetectorBootstrapService } from "./bootstrapService";
 
+const app = createApp();
 runApp({
   port: config.ports.detector,
-  createApp,
+  app,
   bootstrapService: new DetectorBootstrapService(),
  }).catch((e: unknown) => {
   console.error(e);

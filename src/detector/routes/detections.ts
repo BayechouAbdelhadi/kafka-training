@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
-import type { BottleDetectedProducer } from "../../kafka/producers/BottleDetectedProducer.js";
-import * as detectorService from "../service.js";
+import type { BottleDetectedProducer } from "../../kafka/producers/BottleDetectedProducer";
+import * as detectorService from "../service";
 
 /** Express app.locals type for detector (set in main). */
 export interface DetectorLocals {

@@ -1,6 +1,6 @@
 import express from "express";
-import { detectionsRouter } from "./routes/detections.js";
-import { healthRouter } from "./routes/health.js";
+import { detectionsRouter } from "./routes/detections";
+import { healthRouter } from "./routes/health";
 
 /** Create Express app. Attach Kafka producer in main via app.locals.kafkaProducer. */
 export function createApp(): express.Express {

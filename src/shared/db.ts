@@ -1,4 +1,4 @@
-import type { BottleState } from "./types.js";
+import type { BottleState } from "./types";
 
 const store = new Map<string, BottleState>();
 

@@ -1,5 +1,5 @@
-import * as db from "../shared/db.js";
-import type { BottleState } from "../shared/types.js";
+import * as db from "../shared/db";
+import type { BottleState } from "../shared/types";
 
 export function getBottle(bottleId: string): BottleState | undefined {
   return db.getBottle(bottleId);

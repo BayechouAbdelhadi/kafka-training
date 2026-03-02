@@ -1,35 +1,31 @@
 import type express from "express";
-import type { BootstrapService } from "./BootstrapService.js";
+import type { BootstrapService } from "./BootstrapService";
 
 export interface RunAppOptions {
   /** Port to listen on. */
   port: number;
-  /** Returns the Express app (routes, middleware). */
-  createApp: () => express.Express;
-  /** Bootstrap service: process() runs before listen, cleanUp() runs on shutdown. */
+  /** The already created Express app instance. */
+  app: express.Express;
+  /** Bootstrap service: onApplicationBootstrap() runs before listen, onApplicationShutDown() runs on shutdown. */
   bootstrapService?: BootstrapService;
-  /** Run after createApp, before listen (e.g. mount Swagger). */
+  /** Run after app is created, before listen (e.g. mount Swagger). */
   mount?: (app: express.Express) => void;
-  /** Message to log when server is listening. */
+  /** Optional custom startup message. */
+  startupMessage?: (port: number) => string;
 }
 
+const defaultStartupMessage = (port: number): string =>
+  `Server listening on http://localhost:${port}`;
 
 /**
- * Creates the app, runs bootstrapService.process() (optional), mounts extra middleware (optional),
- * starts the server, and registers graceful shutdown (bootstrapService.cleanUp) on SIGTERM/SIGINT.
+ * Runs the given Express app: applies bootstrapService, optional mount,
+ * starts the HTTP server, and wires graceful shutdown.
  */
 export async function runApp(options: RunAppOptions): Promise<void> {
-  const {
-    port,
-    createApp,
-    bootstrapService,
-    mount,
-  } = options;
-
-  const app = createApp();
+  const { port, app, bootstrapService, mount, startupMessage } = options;
 
   if (bootstrapService) {
-    const result = await bootstrapService.process();
+    const result = await bootstrapService.onApplicationBootstrap();
     if (result.locals) {
       Object.assign(app.locals, result.locals);
     }
@@ -40,7 +36,8 @@ export async function runApp(options: RunAppOptions): Promise<void> {
   }
 
   const server = app.listen(port, () => {
-    console.log(`Server listening on http://localhost:${port}`);
+    const message = startupMessage ?? defaultStartupMessage;
+    console.log(message(port));
   });
 
   server.on("error", (err: NodeJS.ErrnoException) => {
@@ -54,7 +51,7 @@ export async function runApp(options: RunAppOptions): Promise<void> {
   });
 
   const shutdown = async () => {
-    if (bootstrapService) await bootstrapService.cleanUp();
+    if (bootstrapService) await bootstrapService.onApplicationShutDown();
     server.close(() => process.exit(0));
   };
   process.on("SIGTERM", shutdown);

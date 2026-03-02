@@ -1,8 +1,8 @@
 import type { EachMessagePayload } from "kafkajs";
-import { BottleAnalysisResultProducer } from "../kafka/producers/BottleAnalysisResultProducer.js";
-import { BottleDetectedConsumer } from "../kafka/consumers/BottleDetectedConsumer.js";
-import { config } from "./config.js";
-import type { BottleDetected, BottleAnalysisResult } from "./types.js";
+import { BottleAnalysisResultProducer } from "../kafka/producers/BottleAnalysisResultProducer";
+import { BottleDetectedConsumer } from "../kafka/consumers/BottleDetectedConsumer";
+import { config } from "./config";
+import type { BottleDetected, BottleAnalysisResult } from "./types";
 
 export type AnalyzerName = "cap" | "label" | "shape";
 

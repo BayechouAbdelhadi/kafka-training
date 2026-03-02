@@ -1,4 +1,4 @@
-import { LabelAnalyzer } from "./analyzer.js";
+import { LabelAnalyzer } from "./analyzer";
 
 export async function startAnalyzer(): Promise<LabelAnalyzer> {
   const analyzer = new LabelAnalyzer();

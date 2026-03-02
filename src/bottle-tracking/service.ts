@@ -1,7 +1,7 @@
-import { BottleTrackerConsumer } from "../kafka/consumers/BottleTrackerConsumer.js";
-import { config } from "../shared/config.js";
-import type { BottleDetected, BottleAnalysisResult, BottleRejected, BottleStatus } from "../shared/types.js";
-import type * as repo from "./repository.js";
+import { BottleTrackerConsumer } from "../kafka/consumers/BottleTrackerConsumer";
+import { config } from "../shared/config";
+import type { BottleDetected, BottleAnalysisResult, BottleRejected, BottleStatus } from "../shared/types";
+import type * as repo from "./repository";
 
 const pendingResults = new Map<string, BottleAnalysisResult[]>();
 

@@ -1,6 +1,6 @@
 import type { Consumer as KafkajsConsumer, ConsumerRunConfig } from "kafkajs";
-import { getKafka } from "../client.js";
-import { config } from "../../shared/config.js";
+import { KafkaClient } from "../client";
+import { config } from "../../shared/config";
 
 const TRACKER_TOPICS = [
   config.topics.bottleDetected,
@@ -17,7 +17,7 @@ export class BottleTrackerConsumer {
   }
 
   static async create(groupId: string): Promise<BottleTrackerConsumer> {
-    const consumer = getKafka().consumer({ groupId });
+    const consumer = KafkaClient.create().createConsumer(groupId);
     await consumer.connect();
     return new BottleTrackerConsumer(consumer);
   }

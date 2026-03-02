@@ -1,8 +1,8 @@
 import type { EachMessagePayload } from "kafkajs";
-import { BottleAnalysisResultConsumer } from "../kafka/consumers/BottleAnalysisResultConsumer.js";
-import { BottleRejectedProducer } from "../kafka/producers/BottleRejectedProducer.js";
-import { config } from "../shared/config.js";
-import type { BottleAnalysisResult, BottleRejected } from "../shared/types.js";
+import { BottleAnalysisResultConsumer } from "../kafka/consumers/BottleAnalysisResultConsumer";
+import { BottleRejectedProducer } from "../kafka/producers/BottleRejectedProducer";
+import { config } from "../shared/config";
+import type { BottleAnalysisResult, BottleRejected } from "../shared/types";
 
 const TOPIC_IN = config.topics.bottleAnalysisResult;
 const TOPIC_OUT = config.topics.bottleRejected;

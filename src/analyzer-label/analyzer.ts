@@ -1,5 +1,5 @@
-import { BaseAnalyzer } from "../shared/BaseAnalyzer.js";
-import type { BottleDetected } from "../shared/types.js";
+import { BaseAnalyzer } from "../shared/BaseAnalyzer";
+import type { BottleDetected } from "../shared/types";
 
 export class LabelAnalyzer extends BaseAnalyzer {
   get name() {

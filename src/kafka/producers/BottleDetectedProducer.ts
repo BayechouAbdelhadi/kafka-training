@@ -1,7 +1,7 @@
 import type { Message } from "kafkajs";
 import type { Producer as KafkajsProducer } from "kafkajs";
-import { getKafka } from "../client.js";
-import { config } from "../../shared/config.js";
+import { config } from "../../shared/config";
+import { KafkaClient } from "../client";
 
 /** Produces to topic bottle.detected (detection events). */
 export class BottleDetectedProducer {
@@ -12,7 +12,7 @@ export class BottleDetectedProducer {
   }
 
   static async create(): Promise<BottleDetectedProducer> {
-    const producer = getKafka().producer();
+    const producer = KafkaClient.create().createProducer();
     await producer.connect();
     return new BottleDetectedProducer(producer);
   }
