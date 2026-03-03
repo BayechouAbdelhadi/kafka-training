@@ -4,6 +4,10 @@ import { BottleRejectedProducer } from "../kafka/producers/BottleRejectedProduce
 import { config } from "../shared/config";
 import type { BottleAnalysisResult, BottleRejected } from "../shared/types";
 import { Processor } from "../shared/Processor";
+import {
+  BottleAnalysisResultAvro,
+  BottleRejectedAvro,
+} from "../shared/schemaRegistry";
 
 const TOPIC_IN = config.topics.bottleAnalysisResult;
 const TOPIC_OUT = config.topics.bottleRejected;
@@ -11,6 +15,8 @@ const TOPIC_OUT = config.topics.bottleRejected;
 export class AutomationProcessor extends Processor {
   protected consumer!: BottleAnalysisResultConsumer;
   protected producer!: BottleRejectedProducer;
+  private readonly analysisAvro = BottleAnalysisResultAvro.create();
+  private readonly rejectedAvro = BottleRejectedAvro.create();
 
   async process(..._args: unknown[]): Promise<void> {
     const groupId = config.kafka.consumerGroups.automation;
@@ -19,11 +25,13 @@ export class AutomationProcessor extends Processor {
     await this.consumer.subscribe(true);
     await this.consumer.run({
       eachMessage: async ({ message }: EachMessagePayload) => {
-        const raw = message.value?.toString();
-        if (!raw) return;
+        const valueBuffer = message.value as Buffer | null | undefined;
+        if (!valueBuffer) return;
         let result: BottleAnalysisResult;
         try {
-          result = JSON.parse(raw) as BottleAnalysisResult;
+          result = await this.analysisAvro.deserialize(
+            valueBuffer as Buffer,
+          );
         } catch {
           return;
         }
@@ -33,13 +41,16 @@ export class AutomationProcessor extends Processor {
             reason: result.details ?? `${result.analyzer} check failed`,
             timestamp: new Date().toISOString(),
           };
-          await this.producer.send([{ key: result.bottleId, value: JSON.stringify(payload) }]);
+          const encoded = await this.rejectedAvro.serialize(payload);
+          await this.producer.send([{ key: result.bottleId, value: encoded }]);
           console.log(`Rejected: ${result.bottleId} (${payload.reason})`);
         }
       },
     });
 
-    console.log(`Automation consuming ${TOPIC_IN}, producing to ${TOPIC_OUT} when any analysis fails.`);
+    console.log(
+      `Automation consuming ${TOPIC_IN}, producing to ${TOPIC_OUT} when any analysis fails.`,
+    );
   }
 
   async cleanUp(): Promise<void> {

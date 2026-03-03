@@ -1,11 +1,24 @@
 import { BottleTrackerConsumer } from "../kafka/consumers/BottleTrackerConsumer";
 import { config } from "../shared/config";
-import type { BottleDetected, BottleAnalysisResult, BottleRejected, BottleStatus } from "../shared/types";
+import type {
+  BottleDetected,
+  BottleAnalysisResult,
+  BottleRejected,
+  BottleStatus,
+} from "../shared/types";
 import { Processor } from "../shared/Processor";
 import * as repository from "./repository";
+import {
+  BottleDetectedAvro,
+  BottleAnalysisResultAvro,
+  BottleRejectedAvro,
+} from "../shared/schemaRegistry";
 
 export class TrackerProcessor extends Processor {
   protected consumer!: BottleTrackerConsumer;
+  private readonly detectedAvro = BottleDetectedAvro.create();
+  private readonly analysisAvro = BottleAnalysisResultAvro.create();
+  private readonly rejectedAvro = BottleRejectedAvro.create();
 
   async process(..._args: unknown[]): Promise<void> {
     const groupId = config.kafka.consumerGroups.tracker;
@@ -13,18 +26,24 @@ export class TrackerProcessor extends Processor {
     await this.consumer.subscribe(true);
     await this.consumer.run({
       eachMessage: async ({ topic, message }) => {
-        const raw = message.value?.toString();
-        if (!raw) return;
+        const valueBuffer = message.value as Buffer | null | undefined;
+        if (!valueBuffer) return;
         try {
           switch (topic) {
             case config.topics.bottleDetected:
-              this.handleBottleDetected(JSON.parse(raw) as BottleDetected);
+              this.handleBottleDetected(
+                await this.detectedAvro.deserialize(valueBuffer as Buffer),
+              );
               break;
             case config.topics.bottleAnalysisResult:
-              this.handleBottleAnalysisResult(JSON.parse(raw) as BottleAnalysisResult);
+              this.handleBottleAnalysisResult(
+                await this.analysisAvro.deserialize(valueBuffer as Buffer),
+              );
               break;
             case config.topics.bottleRejected:
-              this.handleBottleRejected(JSON.parse(raw) as BottleRejected);
+              this.handleBottleRejected(
+                await this.rejectedAvro.deserialize(valueBuffer as Buffer),
+              );
               break;
           }
         } catch (err: unknown) {
@@ -33,8 +52,14 @@ export class TrackerProcessor extends Processor {
       },
     });
 
-    const topics = [config.topics.bottleDetected, config.topics.bottleAnalysisResult, config.topics.bottleRejected];
-    console.log(`Bottle tracker consuming [${topics.join(", ")}], updating in-memory DB.`);
+    const topics = [
+      config.topics.bottleDetected,
+      config.topics.bottleAnalysisResult,
+      config.topics.bottleRejected,
+    ];
+    console.log(
+      `Bottle tracker consuming [${topics.join(", ")}], updating in-memory DB.`,
+    );
   }
 
   private handleBottleDetected(payload: BottleDetected): void {
@@ -51,7 +76,10 @@ export class TrackerProcessor extends Processor {
     const state = repository.getBottle(payload.bottleId);
     if (state) {
       const analyses = [...state.analyses, payload];
-      repository.updateBottle(payload.bottleId, { analyses, status: this.getStatus(analyses) });
+      repository.updateBottle(payload.bottleId, {
+        analyses,
+        status: this.getStatus(analyses),
+      });
     }
   }
 

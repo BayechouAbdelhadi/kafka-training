@@ -2,9 +2,11 @@ import type { Request, Response } from "express";
 import { Processor } from "../shared/Processor";
 import { BottleDetectedProducer } from "../kafka/producers/BottleDetectedProducer";
 import type { BottleDetected } from "../shared/types";
+import { BottleDetectedAvro } from "../shared/schemaRegistry";
 
 export class DetectorProcessor extends Processor {
   private readonly producer: BottleDetectedProducer;
+  private readonly avro = BottleDetectedAvro.create();
 
   private constructor(producer: BottleDetectedProducer) {
     super();
@@ -34,9 +36,8 @@ export class DetectorProcessor extends Processor {
           ? imageUrl.trim()
           : `https://example.com/capture/${bottleId.trim()}.jpg`,
     };
-    await this.producer.send([
-      { key: payload.bottleId, value: JSON.stringify(payload) },
-    ]);
+    const value = await this.avro.serialize(payload);
+    await this.producer.send([{ key: payload.bottleId, value }]);
     return payload;
   }
 

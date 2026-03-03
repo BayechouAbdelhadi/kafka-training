@@ -41,4 +41,5 @@ export const config = {
     automation: port("AUTOMATION_PORT", 3020),
     tracker: port("TRACKER_PORT", 3030),
   },
+  schemaRegistryUrl: process.env.SCHEMA_REGISTRY_URL ?? "http://localhost:8081",
 } as const;

@@ -4,6 +4,10 @@ import { BottleDetectedConsumer } from "../kafka/consumers/BottleDetectedConsume
 import { config } from "./config";
 import type { BottleDetected, BottleAnalysisResult } from "./types";
 import { Processor } from "./Processor";
+import {
+  BottleDetectedAvro,
+  BottleAnalysisResultAvro,
+} from "./schemaRegistry";
 
 export type AnalyzerName = "cap" | "label" | "shape";
 
@@ -11,6 +15,8 @@ export abstract class BaseAnalyzer extends Processor {
   protected consumer!: BottleDetectedConsumer;
   protected producer!: BottleAnalysisResultProducer;
   protected consumerGroupId!: string;
+  private readonly detectedAvro = BottleDetectedAvro.create();
+  private readonly resultAvro = BottleAnalysisResultAvro.create();
 
   abstract get name(): AnalyzerName;
 
@@ -28,11 +34,13 @@ export abstract class BaseAnalyzer extends Processor {
     await this.consumer.run({
       eachMessage: async ({ message }: EachMessagePayload) => {
         const key = message.key?.toString();
-        const raw = message.value?.toString();
-        if (!key || !raw) return;
+        const valueBuffer = message.value as Buffer | null | undefined;
+        if (!key || !valueBuffer) return;
         let payload: BottleDetected;
         try {
-          payload = JSON.parse(raw) as BottleDetected;
+          payload = await this.detectedAvro.deserialize(
+            valueBuffer as Buffer,
+          );
         } catch {
           return;
         }
@@ -44,12 +52,17 @@ export abstract class BaseAnalyzer extends Processor {
           timestamp: new Date().toISOString(),
           details: passed ? undefined : `${this.name} check failed`,
         };
-        await this.producer.send([{ key: payload.bottleId, value: JSON.stringify(result) }]);
-        console.log(`${this.name}: ${payload.bottleId} -> ${passed ? "pass" : "fail"}`);
+        const encoded = await this.resultAvro.serialize(result);
+        await this.producer.send([{ key: payload.bottleId, value: encoded }]);
+        console.log(
+          `${this.name}: ${payload.bottleId} -> ${passed ? "pass" : "fail"}`,
+        );
       },
     });
 
-    console.log(`Analyzer "${this.name}" consuming ${topicIn} (group ${this.consumerGroupId}), producing to ${topicOut}.`);
+    console.log(
+      `Analyzer "${this.name}" consuming ${topicIn} (group ${this.consumerGroupId}), producing to ${topicOut}.`,
+    );
   }
 
   async cleanUp(): Promise<void> {

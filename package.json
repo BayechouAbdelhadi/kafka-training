@@ -25,8 +25,9 @@
     "dev": "concurrently -n tracker,detector,cap,label,shape,automation -c cyan,magenta,yellow,yellow,yellow,green \"npm run dev:tracker\" \"npm run dev:detector\" \"npm run dev:analyzer-cap\" \"npm run dev:analyzer-label\" \"npm run dev:analyzer-shape\" \"npm run dev:automation\""
   },
   "dependencies": {
-    "kafkajs": "^2.2.4",
+    "@confluentinc/schemaregistry": "^1.8.2",
     "express": "^4.21.0",
+    "kafkajs": "^2.2.4",
     "swagger-ui-express": "^5.0.0"
   },
   "devDependencies": {
