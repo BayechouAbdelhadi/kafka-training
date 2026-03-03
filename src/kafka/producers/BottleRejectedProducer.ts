@@ -22,6 +22,12 @@ export class BottleRejectedProducer {
   }
 
   async send(messages: Message[]): ReturnType<KafkajsProducer["send"]> {
-    return this.producer.send({ topic: config.topics.bottleRejected, messages });
+    const opts = KafkaClient.getProducerSendOptions();
+    return this.producer.send({
+      topic: config.topics.bottleRejected,
+      messages,
+      acks: opts.acks,
+      compression: opts.compression,
+    });
   }
 }

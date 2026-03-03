@@ -1,15 +1,15 @@
 import { BootstrapService } from "../shared/BootstrapService";
-import * as analyzerService from "./service";
+import { CapAnalyzer } from "./analyzer";
 
 export class AnalyzerCapBootstrapService extends BootstrapService {
-  private analyzer: Awaited<
-    ReturnType<typeof analyzerService.startAnalyzer>
-  > | null = null;
+  private analyzer: CapAnalyzer| null = null;
 
   async onApplicationBootstrap(): Promise<{
     locals?: Record<string, unknown>;
   }> {
-    this.analyzer = await analyzerService.startAnalyzer();
+    const analyzer = new CapAnalyzer();
+    this.analyzer = analyzer;
+    await analyzer.process();
     return {};
   }
 

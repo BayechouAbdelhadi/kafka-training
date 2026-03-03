@@ -1,15 +1,15 @@
 import { BootstrapService } from "../shared/BootstrapService";
-import * as analyzerService from "./service";
+import { ShapeAnalyzer } from "./analyzer";
 
 export class AnalyzerShapeBootstrapService extends BootstrapService {
-  private analyzer: Awaited<
-    ReturnType<typeof analyzerService.startAnalyzer>
-  > | null = null;
+  private analyzer: ShapeAnalyzer | null = null;
 
   async onApplicationBootstrap(): Promise<{
     locals?: Record<string, unknown>;
   }> {
-    this.analyzer = await analyzerService.startAnalyzer();
+    const analyzer = new ShapeAnalyzer();
+    this.analyzer = analyzer;
+    await analyzer.process();
     return {};
   }
 

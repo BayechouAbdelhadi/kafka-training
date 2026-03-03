@@ -1,8 +1,8 @@
-import { Kafka } from "kafkajs";
+import { CompressionTypes, Kafka } from "kafkajs";
 import { config } from "../shared/config";
 
 /**
- * Kafka client wrapper.
+ * Kafka client wrapper (steps 1–4: bootstrap, producer durability/idempotence/retries, consumer timeouts).
  * Use KafkaClient.create() to get the singleton instance, then call instance methods.
  */
 export class KafkaClient {
@@ -24,14 +24,36 @@ export class KafkaClient {
     return KafkaClient.instance;
   }
 
-  /** Create a kafkajs producer bound to this client. */
+  /** Create a kafkajs producer (Step 3: idempotent, retries, maxInFlight). acks/compression applied per send. */
   createProducer() {
-    return this.kafka.producer();
+    const p = config.kafka.producer;
+    return this.kafka.producer({
+      idempotent: true, // no duplicates on retry; preserves order per partition with maxInFlight > 1
+      retry: {
+        retries: p.retries,
+        initialRetryTime: p.initialRetryTime,
+        maxRetryTime: p.maxRetryTime,
+      },
+      maxInFlightRequests: p.maxInFlightRequests,
+    });
   }
 
-  /** Create a kafkajs consumer for the given groupId. */
+  /** Create a kafkajs consumer (Step 4: sessionTimeout, rebalanceTimeout, heartbeatInterval). */
   createConsumer(groupId: string) {
-    return this.kafka.consumer({ groupId });
+    const c = config.kafka.consumer;
+    return this.kafka.consumer({
+      groupId,
+      sessionTimeout: c.sessionTimeout,
+      rebalanceTimeout: c.rebalanceTimeout,
+      heartbeatInterval: c.heartbeatInterval,
+    });
+  }
+
+  /** Producer send options from config (Step 3: acks=all, compression). */
+  static getProducerSendOptions(): { acks: number; compression: CompressionTypes } {
+    const p = config.kafka.producer;
+    const compression = p.compression === "zstd" ? CompressionTypes.ZSTD : CompressionTypes.LZ4;
+    return { acks: p.acks, compression };
   }
 }
 

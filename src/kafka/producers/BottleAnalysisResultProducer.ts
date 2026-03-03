@@ -22,6 +22,12 @@ export class BottleAnalysisResultProducer {
   }
 
   async send(messages: Message[]): ReturnType<KafkajsProducer["send"]> {
-    return this.producer.send({ topic: config.topics.bottleAnalysisResult, messages });
+    const opts = KafkaClient.getProducerSendOptions();
+    return this.producer.send({
+      topic: config.topics.bottleAnalysisResult,
+      messages,
+      acks: opts.acks,
+      compression: opts.compression,
+    });
   }
 }

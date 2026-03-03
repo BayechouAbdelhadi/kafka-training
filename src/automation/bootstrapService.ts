@@ -1,21 +1,22 @@
 import { BootstrapService } from "../shared/BootstrapService";
-import * as automationService from "./service";
+import { AutomationProcessor } from "./automationProcessor";
 
 export class AutomationBootstrapService extends BootstrapService {
-  private disconnect: (() => Promise<void>) | null = null;
+  private processor: AutomationProcessor | null = null;
 
   async onApplicationBootstrap(): Promise<{
     locals?: Record<string, unknown>;
   }> {
-    const handle = await automationService.startAutomation();
-    this.disconnect = () => handle.disconnect();
+    const processor = new AutomationProcessor();
+    this.processor = processor;
+    await processor.process();
     return {};
   }
 
   async onApplicationShutDown(): Promise<void> {
-    if (this.disconnect) {
-      await this.disconnect();
-      this.disconnect = null;
+    if (this.processor) {
+      await this.processor.cleanUp();
+      this.processor = null;
     }
   }
 }
