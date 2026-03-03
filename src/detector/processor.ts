@@ -37,6 +37,7 @@ export class DetectorProcessor extends Processor {
           : `https://example.com/capture/${bottleId.trim()}.jpg`,
     };
     const value = await this.avro.serialize(payload);
+    //Key will allow ordering of messages by bottleId, all events for a bottle will be in the same partition
     await this.producer.send([{ key: payload.bottleId, value }]);
     return payload;
   }
