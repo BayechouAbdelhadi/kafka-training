@@ -5,5 +5,5 @@ POST {{detectorUrl}}/detections
 Content-Type: application/json
 
 {
-  "bottleId": "bottle-0001"
+  "bottleId": "bottle-0002"
 }

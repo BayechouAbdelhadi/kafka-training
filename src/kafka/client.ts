@@ -52,7 +52,7 @@ export class KafkaClient {
   /** Producer send options from config (Step 3: acks=all, compression). */
   static getProducerSendOptions(): { acks: number; compression: CompressionTypes } {
     const p = config.kafka.producer;
-    const compression = p.compression === "zstd" ? CompressionTypes.ZSTD : CompressionTypes.LZ4;
+    const compression = p.compression === "zstd" ? CompressionTypes.ZSTD : CompressionTypes.GZIP;
     return { acks: p.acks, compression };
   }
 }

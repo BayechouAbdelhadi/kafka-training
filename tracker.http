@@ -1,0 +1,17 @@
+@trackerUrl = http://localhost:3030
+# Tracker consumes Kafka and exposes bottle state. After POST to detector, wait ~1s then GET /bottles or /bottles/:id.
+
+### List all bottles
+GET {{trackerUrl}}/bottles
+
+### Get one bottle by id
+GET {{trackerUrl}}/bottles/bottle-0001
+
+### List bottles by status: detected | valid | to_reject | rejected
+GET {{trackerUrl}}/bottles/status/detected
+
+### Counts by status
+GET {{trackerUrl}}/stats
+
+### Health
+GET {{trackerUrl}}/health

@@ -2,11 +2,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "API",
+      "name": "Tracker",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--inspect=9229", "dist/api/main.js"],
+      "runtimeArgs": ["--inspect=9229", "dist/bottle-tracking/main.js"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     },
@@ -56,16 +56,7 @@
       "console": "integratedTerminal"
     },
     {
-      "name": "Tracker",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["--inspect=9235", "dist/bottle-tracking/main.js"],
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Attach to API",
+      "name": "Attach to Tracker",
       "type": "node",
       "request": "attach",
       "port": 9229,
@@ -105,26 +96,18 @@
       "request": "attach",
       "port": 9234,
       "restart": true
-    },
-    {
-      "name": "Attach to Tracker",
-      "type": "node",
-      "request": "attach",
-      "port": 9235,
-      "restart": true
     }
   ],
   "compounds": [
     {
       "name": "Bottle: All",
       "configurations": [
-        "API",
+        "Tracker",
         "Detector",
         "Analyzer Cap",
         "Analyzer Label",
         "Analyzer Shape",
-        "Automation",
-        "Tracker"
+        "Automation"
       ],
       "stopAll": true
     }

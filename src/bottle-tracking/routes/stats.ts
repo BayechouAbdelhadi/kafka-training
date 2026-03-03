@@ -1,7 +1,8 @@
 import { Router, type Request, type Response } from "express";
+import * as repository from "../repository";
 
 const router = Router();
 router.get("/", (_req: Request, res: Response) => {
-  res.json({ ok: true });
+  res.json(repository.getStats());
 });
-export const healthRouter = router;
+export const statsRouter = router;

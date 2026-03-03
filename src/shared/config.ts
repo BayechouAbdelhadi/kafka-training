@@ -19,7 +19,7 @@ export const config = {
       initialRetryTime: 100,
       maxRetryTime: 30_000,
       maxInFlightRequests: 5,
-      compression: "lz4" as "lz4" | "zstd", // lz4 or zstd; good balance of speed and ratio
+      compression: "gzip" as "gzip" | "zstd", // KafkaJS supports gzip, snappy, zstd (not lz4)
     },
     // Step 4 — Consumers: group, session/rebalance timeouts. Start position: pass fromBeginning in subscribe({ topic, fromBeginning }).
     consumer: {
@@ -34,7 +34,6 @@ export const config = {
     bottleRejected: "bottle.rejected",
   },
   ports: {
-    api: port("API_PORT", 3009),
     detector: port("DETECTOR_PORT", 3010),
     analyzerCap: port("ANALYZER_CAP_PORT", 3011),
     analyzerLabel: port("ANALYZER_LABEL_PORT", 3012),
