@@ -136,6 +136,8 @@ services:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-1:9092,PLAINTEXT://kafka-2:9092,PLAINTEXT://kafka-3:9092,PLAINTEXT://kafka-4:9092
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      # Global default: old schema can read data written by new schema (transitive across all versions)
+      SCHEMA_REGISTRY_SCHEMA_COMPATIBILITY_LEVEL: FORWARD_TRANSITIVE
 
 volumes:
   kafka-1-data:
