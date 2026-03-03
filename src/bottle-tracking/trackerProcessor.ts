@@ -4,15 +4,8 @@ import type { BottleDetected, BottleAnalysisResult, BottleRejected, BottleStatus
 import { Processor } from "../shared/Processor";
 import * as repository from "./repository";
 
-function getStatus(results: BottleAnalysisResult[]): BottleStatus {
-  if (results.length < 3) return "detected";
-  const failed = results.some((r) => !r.passed);
-  return failed ? "to_reject" : "valid";
-}
-
 export class TrackerProcessor extends Processor {
   protected consumer!: BottleTrackerConsumer;
-  private readonly pendingResults = new Map<string, BottleAnalysisResult[]>();
 
   async process(..._args: unknown[]): Promise<void> {
     const groupId = config.kafka.consumerGroups.tracker;
@@ -20,41 +13,19 @@ export class TrackerProcessor extends Processor {
     await this.consumer.subscribe(true);
     await this.consumer.run({
       eachMessage: async ({ topic, message }) => {
-        const key = message.key?.toString();
         const raw = message.value?.toString();
-        if (!key || !raw) return;
+        if (!raw) return;
         try {
-          if (topic === config.topics.bottleDetected) {
-            const payload = JSON.parse(raw) as BottleDetected;
-            repository.setBottle(payload.bottleId, {
-              bottleId: payload.bottleId,
-              status: "detected",
-              detectedAt: payload.timestamp,
-              imageUrl: payload.imageUrl,
-              analyses: [],
-            });
-            this.pendingResults.set(payload.bottleId, []);
-            return;
-          }
-          if (topic === config.topics.bottleAnalysisResult) {
-            const payload = JSON.parse(raw) as BottleAnalysisResult;
-            const arr = this.pendingResults.get(payload.bottleId) ?? [];
-            arr.push(payload);
-            this.pendingResults.set(payload.bottleId, arr);
-            const state = repository.getBottle(payload.bottleId);
-            if (state) {
-              repository.updateBottle(payload.bottleId, { analyses: [...arr], status: getStatus(arr) });
-            }
-            return;
-          }
-          if (topic === config.topics.bottleRejected) {
-            const payload = JSON.parse(raw) as BottleRejected;
-            repository.updateBottle(payload.bottleId, {
-              status: "rejected",
-              rejectedAt: payload.timestamp,
-              rejectReason: payload.reason,
-            });
-            this.pendingResults.delete(payload.bottleId);
+          switch (topic) {
+            case config.topics.bottleDetected:
+              this.handleBottleDetected(JSON.parse(raw) as BottleDetected);
+              break;
+            case config.topics.bottleAnalysisResult:
+              this.handleBottleAnalysisResult(JSON.parse(raw) as BottleAnalysisResult);
+              break;
+            case config.topics.bottleRejected:
+              this.handleBottleRejected(JSON.parse(raw) as BottleRejected);
+              break;
           }
         } catch (err: unknown) {
           console.error("Tracker parse error:", err);
@@ -62,7 +33,40 @@ export class TrackerProcessor extends Processor {
       },
     });
 
-    console.log(`Bottle tracker consuming [${[config.topics.bottleDetected, config.topics.bottleAnalysisResult, config.topics.bottleRejected].join(", ")}], updating in-memory DB.`);
+    const topics = [config.topics.bottleDetected, config.topics.bottleAnalysisResult, config.topics.bottleRejected];
+    console.log(`Bottle tracker consuming [${topics.join(", ")}], updating in-memory DB.`);
+  }
+
+  private handleBottleDetected(payload: BottleDetected): void {
+    repository.setBottle(payload.bottleId, {
+      bottleId: payload.bottleId,
+      status: "detected",
+      detectedAt: payload.timestamp,
+      imageUrl: payload.imageUrl,
+      analyses: [],
+    });
+  }
+
+  private handleBottleAnalysisResult(payload: BottleAnalysisResult): void {
+    const state = repository.getBottle(payload.bottleId);
+    if (state) {
+      const analyses = [...state.analyses, payload];
+      repository.updateBottle(payload.bottleId, { analyses, status: this.getStatus(analyses) });
+    }
+  }
+
+  private handleBottleRejected(payload: BottleRejected): void {
+    repository.updateBottle(payload.bottleId, {
+      status: "rejected",
+      rejectedAt: payload.timestamp,
+      rejectReason: payload.reason,
+    });
+  }
+
+  private getStatus(results: BottleAnalysisResult[]): BottleStatus {
+    if (results.length < 3) return "detected";
+    const failed = results.some((r) => !r.passed);
+    return failed ? "to_reject" : "valid";
   }
 
   async cleanUp(): Promise<void> {
