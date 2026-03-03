@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "BottleRejected",
+  "namespace": "bottle.supervision",
+  "doc": "Event emitted by the automation service when a bottle is rejected.",
+  "fields": [
+    {
+      "name": "bottleId",
+      "type": "string",
+      "doc": "Unique identifier of the bottle."
+    },
+    {
+      "name": "reason",
+      "type": "string",
+      "doc": "Human-readable description of why the bottle was rejected."
+    },
+    {
+      "name": "timestamp",
+      "type": "string",
+      "doc": "Rejection timestamp as ISO-8601 string."
+    }
+  ]
+}

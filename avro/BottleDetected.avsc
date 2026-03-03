@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "BottleDetected",
+  "namespace": "bottle.supervision",
+  "doc": "Event emitted by the detector service when a new bottle is captured.",
+  "fields": [
+    {
+      "name": "bottleId",
+      "type": "string",
+      "doc": "Unique identifier of the bottle."
+    },
+    {
+      "name": "timestamp",
+      "type": "string",
+      "doc": "Detection timestamp as ISO-8601 string (e.g. 2026-03-03T00:31:16.895Z)."
+    },
+    {
+      "name": "imageUrl",
+      "type": "string",
+      "doc": "URL of the captured image for this bottle."
+    }
+  ]
+}

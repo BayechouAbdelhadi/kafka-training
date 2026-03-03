@@ -1,0 +1,37 @@
+{
+  "type": "record",
+  "name": "BottleAnalysisResult",
+  "namespace": "bottle.supervision",
+  "doc": "Event emitted by each analyzer with the result of its check.",
+  "fields": [
+    {
+      "name": "bottleId",
+      "type": "string",
+      "doc": "Unique identifier of the bottle."
+    },
+    {
+      "name": "analyzer",
+      "type": "string",
+      "doc": "Name of the analyzer that produced this result (cap, label, shape)."
+    },
+    {
+      "name": "passed",
+      "type": "boolean",
+      "doc": "True if the bottle passed this analyzer, false otherwise."
+    },
+    {
+      "name": "timestamp",
+      "type": "string",
+      "doc": "Analysis timestamp as ISO-8601 string."
+    },
+    {
+      "name": "details",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null,
+      "doc": "Optional failure details when the analyzer did not pass."
+    }
+  ]
+}
