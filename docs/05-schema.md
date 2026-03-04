@@ -166,3 +166,7 @@ Two exercises to practice evolution with FORWARD_TRANSITIVE:
 2. **Rejected evolution** — Try to register a **breaking** change (e.g. remove an existing field, or change the type of a field). The Schema Registry will reject the new schema with a compatibility error. This shows how FORWARD_TRANSITIVE protects existing consumers from reading data they cannot handle.
 
    **What to expect:** A `RestError` with HTTP status **409**, and a message like: *"Schema being registered is incompatible with an earlier schema for subject 'bottle.detected-value'"*. The details will include `errorType: 'READER_FIELD_MISSING_DEFAULT_VALUE'` when you remove a field that had no default in the old schema (the old reader expects that field, so the new schema is rejected). Example detail: *"The field 'imageUrl' at path '/fields/2' in the old schema has no default value and is missing in the new schema"* with `compatibility: 'FORWARD_TRANSITIVE'`. Your app may log or throw this when it calls the registry to register the updated schema.
+
+---
+
+**Next:** [Step 6 — Patterns](docs/06-patterns.md)

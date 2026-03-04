@@ -14,6 +14,7 @@ Follow the steps below to learn by doing.
 3. [Step 3 — Producers](docs/03-producers.md)
 4. [Step 4 — Consumers](docs/04-consumers.md)
 5. [Step 5 — Schema (Avro)](docs/05-schema.md)
+6. [Step 6 — Patterns](docs/06-patterns.md)
 
 ## Preview the docs
 

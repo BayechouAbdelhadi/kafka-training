@@ -86,6 +86,20 @@ Avro schema, Schema Registry, serialization, deserialization, evolution, compati
 
 ---
 
+## Step 6 — [Patterns](docs/06-patterns.md)
+
+Consumer and producer patterns, delivery guarantees, error handling, integration and operational patterns.
+
+| Area | Covered |
+|------|--------|
+| **Consumer patterns** | Scaling, at-least/at-most-once, idempotent processing, offset replay |
+| **Producer patterns** | Durability, idempotence, partitioning, transactions |
+| **Error handling** | Retries, dead-letter topic (DLQ), poison pills, schema errors |
+| **Integration patterns** | Event-driven pipeline, outbox, saga (choreography vs orchestration) |
+| **Operational patterns** | Lag monitoring, rebalance handling, graceful shutdown |
+
+---
+
 ## At a glance
 
 | Step | Focus |
@@ -95,3 +109,4 @@ Avro schema, Schema Registry, serialization, deserialization, evolution, compati
 | 3 | Producers: acks, retries, idempotence, in-flight, compression |
 | 4 | Consumers: groups, offsets, commit, rebalance, deserialization |
 | 5 | Schema: Avro, Registry, serialization, evolution, compatibility |
+| 6 | Patterns: consumer/producer, error handling, integration, operational |
