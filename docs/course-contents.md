@@ -88,15 +88,13 @@ Avro schema, Schema Registry, serialization, deserialization, evolution, compati
 
 ## Step 6 — [Patterns](docs/06-patterns.md)
 
-Consumer and producer patterns, delivery guarantees, error handling, integration and operational patterns.
+Dead-letter queue, saga, and dual write (outbox pattern / listen to yourself).
 
 | Area | Covered |
 |------|--------|
-| **Consumer patterns** | Scaling, at-least/at-most-once, idempotent processing, offset replay |
-| **Producer patterns** | Durability, idempotence, partitioning, transactions |
-| **Error handling** | Retries, dead-letter topic (DLQ), poison pills, schema errors |
-| **Integration patterns** | Event-driven pipeline, outbox, saga (choreography vs orchestration) |
-| **Operational patterns** | Lag monitoring, rebalance handling, graceful shutdown |
+| **Dead-letter queue (DLQ)** | Failed messages to a separate topic; inspect, replay, or handle; isolate poison pills |
+| **Saga** | Distributed workflow; compensation on failure; choreography vs orchestration |
+| **Dual write / Outbox** | Avoid dual write; outbox table + single transaction; “listen to yourself” by publishing from outbox |
 
 ---
 
@@ -109,4 +107,4 @@ Consumer and producer patterns, delivery guarantees, error handling, integration
 | 3 | Producers: acks, retries, idempotence, in-flight, compression |
 | 4 | Consumers: groups, offsets, commit, rebalance, deserialization |
 | 5 | Schema: Avro, Registry, serialization, evolution, compatibility |
-| 6 | Patterns: consumer/producer, error handling, integration, operational |
+| 6 | Patterns: DLQ, saga, dual write (outbox / listen to yourself) |
