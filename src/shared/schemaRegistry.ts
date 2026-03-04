@@ -23,7 +23,8 @@ const client = new SchemaRegistryClient({
  * - BottleAnalysisResultAvro: encode/decode bottle.analysis.result
  * - BottleRejectedAvro: encode/decode bottle.rejected
  *
- * Each class lazily registers its own schema the first time it is used.
+ * Each class registers its schema when created (constructor kicks off ensureRegistered)
+ * and ensureRegistered() is called before serialize/deserialize so the schema exists.
  */
 export class BottleDetectedAvro {
   private static instance: BottleDetectedAvro | null = null;
@@ -37,6 +38,7 @@ export class BottleDetectedAvro {
       useLatestVersion: true,
     });
     this.deserializer = new AvroDeserializer(client, SerdeType.VALUE, {});
+    void this.ensureRegistered();
   }
 
   static create(): BottleDetectedAvro {
@@ -81,6 +83,7 @@ export class BottleAnalysisResultAvro {
       useLatestVersion: true,
     });
     this.deserializer = new AvroDeserializer(client, SerdeType.VALUE, {});
+    void this.ensureRegistered();
   }
 
   static create(): BottleAnalysisResultAvro {
@@ -132,6 +135,7 @@ export class BottleRejectedAvro {
       useLatestVersion: true,
     });
     this.deserializer = new AvroDeserializer(client, SerdeType.VALUE, {});
+    void this.ensureRegistered();
   }
 
   static create(): BottleRejectedAvro {
